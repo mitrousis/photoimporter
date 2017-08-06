@@ -3,13 +3,18 @@
   "version": "0.1.0",
   "description": "Do it.",
   "preferGlobal": true,
+  "scripts": {
+    "test": "mocha"
+  },
   "bin": {
     "photoimport": "photoimport.js"
   },
   "dependencies": {
     "async": "^2.4.0",
-    "exif": "0.4.0",
-    "exiftool": "0.0.3",
-    "exiftool-vendored": "^3.1.1"
+    "exiftool-vendored": "^3.1.1",
+    "konfig": "^0.2.1"
+  },
+  "devDependencies": {
+    "mocha": "^3.5.0"
   }
 }

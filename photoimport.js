@@ -6,16 +6,17 @@
 
 // process.argv
 const fs        = require('fs')
-//var ExifImage   = require("exif").ExifImage;
+const path      = require('path')
 const util      = require('util')
 const exifTool  = require('exiftool-vendored').exiftool
 const async     = require('async')
+const config    = require('konfig')()
 
 //import { exiftool } from "exiftool-vendored";
 
 
-let sourceFolder     = __dirname + '/testphotos/';
-let duplicatesFolder = sourceFolder + 'duplicates/';
+//let sourceFolder     = __dirname + '/testphotos/';
+//let duplicatesFolder = sourceFolder + 'duplicates/';
 
 // Create dupes folder if needed
 /*if(!fs.existsSync(duplicatesFolder)){
@@ -23,38 +24,71 @@ let duplicatesFolder = sourceFolder + 'duplicates/';
     fs.mkdirSync(duplicatesFolder);
 }*/
 
+class PhotoImport {
 
-fs.readdir(sourceFolder, (err, files) => {
+  processFolder(path) {
+    fs.readdir(path, (err, files) => {
     
-  async.eachSeries(files, (file, callback) => {
-    let fullPath = sourceFolder + file
+      async.eachSeries(files, (file, callback) => {
+        let fullPath = path + file
 
-    // Parsing every file, even if non-image or folder
-    // and letting exif determine if we should reject
+        // Parsing every file, even if non-image or folder
+        // and letting exif determine if we should reject
+        this.readExif(fullPath, callback)
+
+      }, (err) => {
+        if(err) {
+          console.error(err)
+        }
+
+        // Need to explicitly close Exif tool or hangs
+        exifTool.end()
+        console.log('Done.')
+      })
+    })
+  }
+
+  getFileList(sourcePath, callback) {
+    let fullPaths = []
+    fs.readdir(sourcePath, (err, files) => {
+
+      for(let f of files){
+        fullPaths.push(path.join(sourcePath, f))
+      }
+      
+      callback(err, fullPaths)
+    })
+  }
+
+
+  readExif(filePath, callback) {
     exifTool
-      .read(fullPath)
-      .then((tags) => {
-          //console.log(tags)
-          if(tags.Error !== 'Unknown file type'){
-            console.log(tags.SourceFile)
-          }
-          callback()
-      })
-      .catch(err => {
-        //console.log('Exif error', err)
+    .read(filePath)
+    .then((tags) => {
+        if(tags.Error !== 'Unknown file type'){
+          console.log(tags.SourceFile)
+        }
         callback()
-      })
+    })
+    .catch(err => {
+      //console.log('Exif error', err)
+      callback()
+    })
+  }
+  
+}
 
 
-  }, (err) => {
-    if(err) console.error(err)
+module.exports = PhotoImport
 
-    exifTool.end()
-    console.log('Done.')
-  })
 
-    
-});
+
+/*let pi = new PhotoImport()
+
+pi.getFileList(__dirname + '/test/photos', (err, list) => {
+  console.log(list)
+})*/
+
 
 
 /*for(var i=0; i<fileList.length; i++){
