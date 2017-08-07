@@ -48,32 +48,36 @@ class PhotoImport {
     })
   }
 
-  getFileList(sourcePath, callback) {
+  getFileList(sourceDir, callback) {
     let fullPaths = []
-    fs.readdir(sourcePath, (err, files) => {
+    fs.readdir(sourceDir, (err, files) => {
 
       for(let f of files){
-        fullPaths.push(path.join(sourcePath, f))
+        fullPaths.push(path.join(sourceDir, f))
       }
       
       callback(err, fullPaths)
     })
   }
 
-
   readExif(filePath, callback) {
     exifTool
     .read(filePath)
     .then((tags) => {
+        let exifData = null
+
         if(tags.Error !== 'Unknown file type'){
-          console.log(tags.SourceFile)
+          exifData = tags
         }
-        callback()
+        callback(null, exifData)
     })
     .catch(err => {
-      //console.log('Exif error', err)
-      callback()
+      callback(err)
     })
+  }
+
+  closeExif() {
+    exifTool.end()
   }
   
 }
@@ -81,13 +85,6 @@ class PhotoImport {
 
 module.exports = PhotoImport
 
-
-
-/*let pi = new PhotoImport()
-
-pi.getFileList(__dirname + '/test/photos', (err, list) => {
-  console.log(list)
-})*/
 
 
 
