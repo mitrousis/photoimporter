@@ -48,32 +48,68 @@ class PhotoImport {
     })
   }
 
-  getFileList(sourceDir, callback) {
-    let fullPaths = []
-    fs.readdir(sourceDir, (err, files) => {
+  // Returns array of fully qualified paths
+  getFileList(sourceDir) {
+    return new Promise((resolve, reject) => {
+      let fullPaths = []
+      fs.readdir(sourceDir, (err, files) => {
+        if(err) {
+          reject(err)
+        } else {
+          for(let f of files){
+            fullPaths.push(path.join(sourceDir, f))
+          }
 
-      for(let f of files){
-        fullPaths.push(path.join(sourceDir, f))
-      }
-      
-      callback(err, fullPaths)
+          resolve(fullPaths)
+        } 
+      })
     })
   }
 
-  readExif(filePath, callback) {
-    exifTool
-    .read(filePath)
-    .then((tags) => {
-        let exifData = null
+  readExif(filePath) {
+    return new Promise((resolve, reject) => {
+      exifTool
+      .read(filePath)
+      .then((tags) => {
+          let exifData = null
 
-        if(tags.Error !== 'Unknown file type'){
-          exifData = tags
-        }
-        callback(null, exifData)
+          if(tags.Error !== 'Unknown file type'){
+            exifData = tags
+          }
+          resolve(exifData)
+      })
+      .catch(err => {
+        reject(err)
+      })
     })
-    .catch(err => {
-      callback(err)
-    })
+    
+  }
+
+  // Returns formatted folder date based on EXIF
+  getFolderDate(exifTags) {
+    let dateNode
+
+    // Cascade through likely timestamps
+    // Found in old AVI files
+    if(exifTags.DateTimeOriginal !== undefined) {
+      dateNode = exifTags.DateTimeOriginal
+
+    // Found in recent camera and iPhone files
+    } else if(exifTags.CreateDate !== undefined){
+      dateNode = exifTags.CreateDate
+    }
+
+    if(dateNode){
+      let yr    = dateNode.year
+      let mo    = dateNode.month
+      let moPad = ('00' + mo.toString()).substring(mo.toString().length)
+
+      return `${yr}-${moPad}`
+
+    } else {
+      return null
+    }
+    
   }
 
   closeExif() {
