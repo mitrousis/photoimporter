@@ -1,12 +1,11 @@
-const PhotoImport = require('./photoimport')
+const PhotoImport = require('./src/PhotoImport')
 
 let pi = new PhotoImport()
 
-pi.readExif(__dirname + '/test/photos/' + 'IMG_5298.JPG', (err, tags) => {
-  console.log(tags)
-  pi.closeExif()
-})
+//pi.processFolder(__dirname + '/test/photos/')
 
+pi.moveFile("/Users/nicholas/_Projects/photo-import/test/photos/DSC02487.JPG",
+"/Users/nicholas/_Projects/photo-import/test/target/1234/DSC02487.JPG" )
 
 /*
 IMG_5298.JPG
