@@ -4,8 +4,7 @@ let pi = new PhotoImport()
 
 //pi.processFolder(__dirname + '/test/photos/')
 
-pi.moveFile("/Users/nicholas/_Projects/photo-import/test/photos/DSC02487.JPG",
-"/Users/nicholas/_Projects/photo-import/test/target/1234/DSC02487.JPG" )
+
 
 /*
 IMG_5298.JPG

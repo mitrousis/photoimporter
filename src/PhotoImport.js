@@ -2,9 +2,9 @@
 
 const fs        = require('fs')
 const path      = require('path')
-const util      = require('util')
+//const util      = require('util')
 const exifTool  = require('exiftool-vendored').exiftool
-const async     = require('async')
+//const async     = require('async')
 const mkdirp    = require('mkdirp')
 
 
@@ -19,34 +19,32 @@ class PhotoImport {
 
     if(!(sourcePath && targetPath)){
       throw(new Error('Source and target paths must be defined'))
-      return
     }
 
     this.sourcePath = sourcePath
     this.targetPath = targetPath
 
     this.getFileList(sourcePath)
-    .then((paths) => {
+      .then((paths) => {
 
-      let exifDataPromises = paths.map(this.readExif)
+        let exifDataPromises = paths.map(this.readExif)
 
-      Promise.all(exifDataPromises)
-      .then((exifTagsList) => {
-        exifTagsList.forEach((tags) => {
-          if(tags !== null) {
-            let folderDate = this.getFolderDate(tags)
-            console.log(folderDate)
-          }
-        })
+        Promise.all(exifDataPromises)
+          .then((exifTagsList) => {
+            exifTagsList.forEach((tags) => {
+              if(tags !== null) {
+                let folderDate = this.getFolderDate(tags)
+                console.log(folderDate)
+              }
+            })
 
-        this.closeExif()
-
+            this.closeExif()
+          })
       })
-    })
-    .catch((err) => {
-      console.log(err)
-      this.closeExif()
-    })
+      .catch((err) => {
+        console.log(err)
+        this.closeExif()
+      })
   }
 
   // Returns array of fully qualified paths
@@ -70,18 +68,16 @@ class PhotoImport {
   readExif(filePath) {
     return new Promise((resolve, reject) => {
       exifTool
-      .read(filePath)
-      .then((tags) => {
+        .read(filePath)
+        .then((tags) => {
           let exifData = null
 
           if(tags.Error !== 'Unknown file type'){
             exifData = tags
           }
           resolve(exifData)
-      })
-      .catch(err => {
-        reject(err)
-      })
+        })
+        .catch((err) => reject(err))
     })
     
   }
@@ -118,22 +114,36 @@ class PhotoImport {
       // Make the target path
       let targetDir = path.dirname(targetFile)
 
+      // mkdirp - makes folders in folders if needed
       mkdirp(targetDir, (err) => {
 
-        if(err) reject(err)
+        if(err) {
+          reject(err)
+        } else {
+          // Check for dupe file. Might as well use 
+          // EXIF tool to verify since we'll want the
+          // tags anyway, if the file is a dupe
+          this.readExif(targetFile)
+          // There must have been a file already here
+            .then((tags) => {
 
-        fs.rename(sourceFile, targetFile, (err) => {
+            })
+            // No file found
+            .catch((err) => {
+            })
+            // Either way, continue with rename unless EXIF dupe too
+            .then(() => {
+              /*fs.rename(sourceFile, targetFile, (err) => {
           
-          console.log(err)
+              console.log(err)
 
-          if(err){
-            reject(err)
-          } else {
-            resolve()
-          }
-          
-        })
-
+              if(err){
+                reject(err)
+              } else {
+                resolve()
+              }*/
+            })
+        }
       })
     })
   }
