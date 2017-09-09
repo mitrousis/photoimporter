@@ -15,6 +15,7 @@ class PhotoImport {
     this.targetPath = null
   }
   
+  // Main entry point for iterating over folder files and starting the move
   processFolder(sourcePath, targetPath) {
 
     if(!(sourcePath && targetPath)){
@@ -27,6 +28,7 @@ class PhotoImport {
     this.getFileList(sourcePath)
       .then((paths) => {
 
+        // Left off here, need to fix this since promise.all will reject all with only 1 bad apple
         let exifDataPromises = paths.map(this.readExif)
 
         Promise.all(exifDataPromises)
@@ -34,7 +36,7 @@ class PhotoImport {
             exifTagsList.forEach((tags) => {
               if(tags !== null) {
                 let folderDate = this.getFolderDate(tags)
-                console.log(folderDate)
+                
               }
             })
 
@@ -58,7 +60,6 @@ class PhotoImport {
           for(let f of files){
             fullPaths.push(path.join(sourceDir, f))
           }
-
           resolve(fullPaths)
         } 
       })
@@ -113,7 +114,6 @@ class PhotoImport {
     return new Promise((resolve, reject) => {
       // Make the target path
       let targetDir = path.dirname(targetFile)
-
       // mkdirp - makes folders in folders if needed
       mkdirp(targetDir, (err) => {
 
@@ -121,15 +121,16 @@ class PhotoImport {
           reject(err)
         } else {
           // Check for dupe file. Might as well use 
-          // EXIF tool to verify since we'll want the
+          // EXIF tool to do the check since we'll want the
           // tags anyway, if the file is a dupe
           this.readExif(targetFile)
-          // There must have been a file already here
+            // There must have been a file already here
             .then((tags) => {
 
             })
-            // No file found
+            // No existing file found
             .catch((err) => {
+
             })
             // Either way, continue with rename unless EXIF dupe too
             .then(() => {

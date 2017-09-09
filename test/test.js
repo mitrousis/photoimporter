@@ -68,7 +68,7 @@ describe('PhotoImport', function() {
 
     it('should return error for no matching file', function() {
       return PhotoImport.readExif(`${sourceFileFolder}/badfile.jpg`)
-        .catch((err) => {
+        .catch(() => {
           assert.ok(true)
         })
     })  
