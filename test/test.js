@@ -24,7 +24,7 @@ describe('PhotoImport', function() {
   })
 
 
-  describe('#getFileList()', function() {
+  /*describe('#getFileList()', function() {
     it('should return an array of fully qualified file paths', function() {
       
       return PhotoImport.getFileList(sourceFileFolder)
@@ -118,8 +118,18 @@ describe('PhotoImport', function() {
     })
 
 
+  })*/
+
+  describe('#processFolder()', function() {
+    it('should process the full folder without error', function() {
+
+      assert.doesNotThrow(
+        () => {
+          PhotoImport.processFolder(sourceFileFolder, targetFileFolder)
+        }
+        
+      )
+
+    }) 
   })
-
-
-
 })

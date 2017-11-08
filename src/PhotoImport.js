@@ -6,7 +6,7 @@ const path      = require('path')
 const exifTool  = require('exiftool-vendored').exiftool
 //const async     = require('async')
 const mkdirp    = require('mkdirp')
-
+const Promise   = require('bluebird')
 
 class PhotoImport {
 
