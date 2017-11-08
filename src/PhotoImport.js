@@ -13,6 +13,7 @@ class PhotoImport {
   constructor() {
     this.sourcePath = null
     this.targetPath = null
+    this.exifCache  = {}
   }
   
   // Main entry point for iterating over folder files and starting the move
@@ -26,27 +27,27 @@ class PhotoImport {
     this.targetPath = targetPath
 
     this.getFileList(sourcePath)
-      .then((paths) => {
+    .then((paths) => {
 
-        // Left off here, need to fix this since promise.all will reject all with only 1 bad apple
-        let exifDataPromises = paths.map(this.readExif)
+      // Left off here, need to fix this since promise.all will reject all with only 1 bad apple
+      let exifDataPromises = paths.map(this.readExif)
 
-        Promise.all(exifDataPromises)
-          .then((exifTagsList) => {
-            exifTagsList.forEach((tags) => {
-              if(tags !== null) {
-                let folderDate = this.getFolderDate(tags)
-                
-              }
-            })
+      Promise.all(exifDataPromises)
+      .then((exifTagsList) => {
+        exifTagsList.forEach((tags) => {
+          if(tags !== null) {
+            let folderDate = this.getFolderDate(tags)
+            
+          }
+        })
 
-            this.closeExif()
-          })
-      })
-      .catch((err) => {
-        console.log(err)
         this.closeExif()
       })
+    })
+    .catch((err) => {
+      console.log(err)
+      this.closeExif()
+    })
   }
 
   // Returns array of fully qualified paths
@@ -68,17 +69,24 @@ class PhotoImport {
 
   readExif(filePath) {
     return new Promise((resolve, reject) => {
-      exifTool
+      if(this.exifCache[filePath] !== undefined){
+        console.log('cache hit', filePath)
+        resolve(this.exifCache[filePath])
+      } else {
+        exifTool
         .read(filePath)
         .then((tags) => {
           let exifData = null
-
+  
           if(tags.Error !== 'Unknown file type'){
             exifData = tags
           }
+          this.exifCache[filePath] = exifData
+
           resolve(exifData)
         })
         .catch((err) => reject(err))
+      }
     })
     
   }
@@ -124,29 +132,43 @@ class PhotoImport {
           // EXIF tool to do the check since we'll want the
           // tags anyway, if the file is a dupe
           this.readExif(targetFile)
-            // There must have been a file already here
-            .then((tags) => {
+          // There must have been a file already here
+          .then((tags) => {
 
-            })
-            // No existing file found
-            .catch((err) => {
+          })
+          // No existing file found
+          .catch((err) => {
 
-            })
-            // Either way, continue with rename unless EXIF dupe too
-            .then(() => {
-              /*fs.rename(sourceFile, targetFile, (err) => {
-          
-              console.log(err)
-
+          })
+          // Continue with rename, but compare EXIF too
+          .then(() => {
+            fs.rename(sourceFile, targetFile, (err) => {
+        
               if(err){
                 reject(err)
               } else {
                 resolve()
-              }*/
+              }
             })
+          })
         }
       })
     })
+  }
+
+  incrementFileName(filename) {
+
+    // Look for _0000.jpg
+    let reg = /_(\d+)(\..*)$/
+    let match = pathB.match(reg)
+
+    // Left off here
+    
+    undefined
+    
+
+    
+    
   }
 
   closeExif() {
