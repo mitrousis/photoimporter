@@ -5,15 +5,20 @@ const path      = require('path')
 //const util      = require('util')
 const exifTool  = require('exiftool-vendored').exiftool
 //const async     = require('async')
-const mkdirp    = require('mkdirp')
+
 const Promise   = require('bluebird')
+
+const mkdirp        = Promise.promisify(require('mkdirp'))
+const hashFiles     = Promise.promisify(require('hash-files'))
+const lstatPromise  = Promise.promisify(fs.lstat)
+const renamePromise = Promise.promisify(fs.rename)
 
 class PhotoImport {
 
   constructor() {
-    this.sourcePath = null
-    this.targetPath = null
-    this.exifCache  = {}
+    this.sourcePath     = null
+    this.targetPath     = null
+    this.duplicatesPath = null
   }
   
   // Main entry point for iterating over folder files and starting the move
@@ -23,8 +28,9 @@ class PhotoImport {
       throw(new Error('Source and target paths must be defined'))
     }
 
-    this.sourcePath = sourcePath
-    this.targetPath = targetPath
+    this.sourcePath     = sourcePath
+    this.targetPath     = targetPath
+    this.duplicatesPath = path.join(this.sourcePath, '/duplicates')
 
     this.getFileList(sourcePath)
     .then((paths) => {
@@ -69,96 +75,70 @@ class PhotoImport {
 
   readExif(filePath) {
     return new Promise((resolve, reject) => {
-      if(this.exifCache[filePath] !== undefined){
-        console.log('cache hit', filePath)
-        resolve(this.exifCache[filePath])
-      } else {
-        exifTool
-        .read(filePath)
-        .then((tags) => {
-          let exifData = null
-  
-          if(tags.Error !== 'Unknown file type'){
-            exifData = tags
-          }
-          this.exifCache[filePath] = exifData
+      exifTool
+      .read(filePath)
+      .then((tags) => {
+        let exifData = null
 
-          resolve(exifData)
-        })
-        .catch((err) => reject(err))
-      }
+        if(tags.Error !== 'Unknown file type'){
+          exifData = tags
+        }
+        resolve(exifData)
+      })
+      .catch((err) => reject(err))
     })
     
   }
 
   // Returns formatted folder date based on EXIF
   getFolderDate(exifTags) {
-    let dateNode
+    let date  = this.getCreationDate(exifTags)
+    let yr    = date.getFullYear()
+    let mo    = date.getMonth() + 1
+    let moPad = ('00' + mo.toString()).substring(mo.toString().length)
 
-    // Cascade through likely timestamps
-    // Found in old AVI files
-    if(exifTags.DateTimeOriginal !== undefined) {
-      dateNode = exifTags.DateTimeOriginal
-
-    // Found in recent camera and iPhone files
-    } else if(exifTags.CreateDate !== undefined){
-      dateNode = exifTags.CreateDate
-    }
-
-    if(dateNode){
-      let yr    = dateNode.year
-      let mo    = dateNode.month
-      let moPad = ('00' + mo.toString()).substring(mo.toString().length)
-
-      return `${yr}-${moPad}`
-
-    } else {
-      return null
-    }
-    
+    return `${yr}-${moPad}`
   }
 
-  moveFile(sourceFile, targetFile) {
-    return new Promise((resolve, reject) => {
-      // Make the target path
-      let targetDir   = path.dirname(targetFile)
-      let isDuplicate = false
+  moveFile(sourceFile, targetFile, duplicatesFolder) {
 
-      // mkdirp - makes folders in folders if needed
-      mkdirp(targetDir, (err) => {
+    // Make the target path
+    let targetDir   = path.dirname(targetFile)
 
-        if(err) {
-          reject(err)
-        } else {
-          // Check for dupe file. Might as well use 
-          // EXIF tool to do the check since we'll want the
-          // tags anyway, if the file is a dupe
-          this.readExif(targetFile)
-          // There must have been a file already here
-          .then((tags) => {
-            // Compare exif data, to determine if just dupe filename
-            //if(tag)
-            console.log(tags)
-
-          })
-          // No existing file found
-          .catch((err) => {
-            console.log(err)
-          })
-          // Continue with rename, but compare EXIF too
-          .then(() => {
-            resolve()
-            /*fs.rename(sourceFile, targetFile, (err) => {
-        
-              if(err){
-                reject(err)
-              } else {
-                resolve()
-              }
-            })*/
-          })
-        }
-      })
+    // mkdirp - makes folders in folders if needed
+    return mkdirp(targetDir)
+    // Problem with making dir
+    .catch((mkdirError) => {
+      console.log('mkdir error')
+    })
+    .then(() => {
+      return lstatPromise(targetFile)
+    })
+    // File exists
+    .then((stats) => {
+      // Checkif actually the same file
+      return this.isSameFile(sourceFile, targetFile)
+    })
+    .then((isSameFile) => {
+      if(isSameFile){
+        // Make us a duplicates folder
+        return mkdirp(duplicatesFolder)
+        .then(() => {
+          // The target file now points to /duplicates
+          return path.join(duplicatesFolder, path.basename(sourceFile))
+        })
+      } else {
+        // Is just same name, so increment target file name
+        return this.incrementFilename(targetFile)
+      }
+    })
+    // No existing file found
+    .catch(() => {
+      return targetFile
+    })
+    // Continue with rename, using transformed filename
+    .then((newTargetFile) => {
+      return renamePromise(sourceFile, newTargetFile)
     })
   }
 
@@ -186,6 +166,38 @@ class PhotoImport {
     return basePath + '_' + version + ext
 
   }
+
+  // Check multiple sources for creation date
+  // Convert exif library's values into Date object
+  getCreationDate(exifTags){
+    let dateNode
+    
+    // Cascade through likely timestamps
+    // Found in old AVI files
+    if(exifTags.DateTimeOriginal !== undefined) {
+      dateNode = exifTags.DateTimeOriginal
+
+    // Found in recent camera and iPhone files
+    } else if(exifTags.CreateDate !== undefined){
+      dateNode = exifTags.CreateDate
+    }
+
+    return new Date(dateNode.year, dateNode.month-1, dateNode.day, dateNode.hour, dateNode.minute, dateNode.second)
+    
+  }
+
+  isSameFile(fileA, fileB) {
+    return new Promise((resolve, reject) => {
+      hashFiles({files : [fileA], algorithm: 'md5'})
+      .then((hashA) => {
+        hashFiles({files : [fileB], algorithm: 'md5'})
+        .then((hashB) => {
+          resolve(hashA == hashB)
+        })
+      })
+    })
+  }
+
 
   closeExif() {
     exifTool.end()
