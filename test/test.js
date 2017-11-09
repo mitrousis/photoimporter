@@ -141,7 +141,7 @@ describe('PhotoImport', function() {
       })
     })
 
-    it('#moveFile() : should move to duplicates folder on exact duplicate file hash, ', function(){
+    it('#moveFile() : should move to duplicates folder on exact duplicate file hash ', function(){
       return PhotoImport.moveFile(
         `${sourceFileFolder}/dupe_test_source_3.jpg`, 
         `${targetFileFolder}/dupe_test_same_exif.jpg`,
@@ -150,6 +150,10 @@ describe('PhotoImport', function() {
       .then(function(){
         assert.ok(fs.existsSync(`${duplicatesFolder}/dupe_test_source_3.jpg`))
       })
+    })
+
+    it('#moveFile() : should ignore non-exif files ', function(){
+      assert.fail('Not implemented')
     })
   })
 
@@ -185,16 +189,11 @@ describe('PhotoImport', function() {
   })
 
 
-  /*describe('#processFolder()', function() {
+  describe('#processFolder()', function() {
     it('should process the full folder without error', function() {
 
-      assert.doesNotThrow(
-        () => {
-          PhotoImport.processFolder(sourceFileFolder, targetFileFolder)
-        }
-        
-      )
+      assert.fail('Not implemented')
 
     }) 
-  })*/
+  })
 })
