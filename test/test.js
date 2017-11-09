@@ -13,7 +13,7 @@ let targetFileFolder = __dirname + '/target'
 describe('PhotoImport', function() {
 
   // Create a source folder wtih assets
-  /*before(function() {    
+  before(function() {    
     proc.execSync(`cp -r ${testAssetFolder}/ ${sourceFileFolder}`)
     proc.execSync(`mkdir ${targetFileFolder}`)
   })
@@ -23,7 +23,7 @@ describe('PhotoImport', function() {
     proc.execSync(`rm -rf ${targetFileFolder}`)
   })
 
-
+ /*
   describe('#getFileList()', function() {
     it('should return an array of fully qualified file paths', function() {
       
@@ -92,9 +92,16 @@ describe('PhotoImport', function() {
 
   })
 
+  */
   describe('#moveFile()', function(){
     
-    it('should create a proper yyyy-mm folder and move the file', function(){
+    // Copy dupe test target files
+    before(function() {    
+      proc.execSync(`mv ${sourceFileFolder}/dupe_test_diff_exif.jpg ${targetFileFolder}/dupe_test_diff_exif.jpg`)
+      proc.execSync(`mv ${sourceFileFolder}/dupe_test_same_exif.jpg ${targetFileFolder}/dupe_test_same_exif.jpg`)
+    })
+
+    /*it('should create a proper yyyy-mm folder and move the file', function(){
       // Hard coding date for testing
       let dateFolder = '2017-04'
 
@@ -113,10 +120,19 @@ describe('PhotoImport', function() {
         assert.ok(fs.existsSync(`${targetFileFolder}/2017-04/move_me.jpg`))
       })
 
+    })*/
+
+    it('duplicate filename, different exif, should increment filename', function(){
+      
+      return PhotoImport.moveFile(`${sourceFileFolder}/dupe_test_source.jpg`, `${targetFileFolder}/dupe_test_diff_exif.jpg`)
+      .then(function(){
+        assert.ok(fs.existsSync(`${targetFileFolder}/dupe_test_diff_exif_1.jpg`))
+      })
+
     })
 
 
-  })*/
+  })
 
   describe('#incrementFilename()', function(){
     

@@ -121,7 +121,9 @@ class PhotoImport {
   moveFile(sourceFile, targetFile) {
     return new Promise((resolve, reject) => {
       // Make the target path
-      let targetDir = path.dirname(targetFile)
+      let targetDir   = path.dirname(targetFile)
+      let isDuplicate = false
+
       // mkdirp - makes folders in folders if needed
       mkdirp(targetDir, (err) => {
 
@@ -134,22 +136,26 @@ class PhotoImport {
           this.readExif(targetFile)
           // There must have been a file already here
           .then((tags) => {
+            // Compare exif data, to determine if just dupe filename
+            //if(tag)
+            console.log(tags)
 
           })
           // No existing file found
           .catch((err) => {
-
+            console.log(err)
           })
           // Continue with rename, but compare EXIF too
           .then(() => {
-            fs.rename(sourceFile, targetFile, (err) => {
+            resolve()
+            /*fs.rename(sourceFile, targetFile, (err) => {
         
               if(err){
                 reject(err)
               } else {
                 resolve()
               }
-            })
+            })*/
           })
         }
       })
