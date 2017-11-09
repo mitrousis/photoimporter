@@ -156,19 +156,29 @@ class PhotoImport {
     })
   }
 
-  incrementFileName(filename) {
+  incrementFilename(filename) {
+    // Look for _1.jpg
+    let reg      = /(.+)(_(\d+))(\..*)/
+    let match    = filename.match(reg)
+    let basePath, version, ext
 
-    // Look for _0000.jpg
-    let reg = /_(\d+)(\..*)$/
-    let match = pathB.match(reg)
+    if(match){
+      basePath = match[1]
+      version  = (parseInt(match[3]) + 1)
+      ext      = match[4]
 
-    // Left off here
+    } else {
+      // Just split the filename and add '_1'
+      reg   = /(.+)(\..*)/
+      match = filename.match(reg)
+     
+      basePath = match[1]
+      version  = 1
+      ext      = match[2]
+    }
     
-    undefined
-    
+    return basePath + '_' + version + ext
 
-    
-    
   }
 
   closeExif() {

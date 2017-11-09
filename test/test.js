@@ -13,7 +13,7 @@ let targetFileFolder = __dirname + '/target'
 describe('PhotoImport', function() {
 
   // Create a source folder wtih assets
-  before(function() {    
+  /*before(function() {    
     proc.execSync(`cp -r ${testAssetFolder}/ ${sourceFileFolder}`)
     proc.execSync(`mkdir ${targetFileFolder}`)
   })
@@ -116,7 +116,29 @@ describe('PhotoImport', function() {
     })
 
 
+  })*/
+
+  describe('#incrementFilename()', function(){
+    
+    it('should add _1 to non-versioned file', function(){
+      assert.equal(PhotoImport.incrementFilename('/some/path/to/filename.jpg'), '/some/path/to/filename_1.jpg');
+    })
+
+    it('should increment _1 to _2', function(){
+      assert.equal(PhotoImport.incrementFilename('/some/path/to/filename_1.jpg'), '/some/path/to/filename_2.jpg');
+    })
+
+    it('should increment from 1 to 2 digits', function(){
+      assert.equal(PhotoImport.incrementFilename('/some/path/to/filename_9.jpg'), '/some/path/to/filename_10.jpg');
+    })
+
+    it('should increment 2 digit number', function(){
+      assert.equal(PhotoImport.incrementFilename('/some/path/to/filename_20.jpg'), '/some/path/to/filename_21.jpg');
+    })
+
+
   })
+
 
   /*describe('#processFolder()', function() {
     it('should process the full folder without error', function() {
