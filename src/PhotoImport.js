@@ -1,15 +1,20 @@
-#! /usr/bin/env node
-
 const fs        = require('fs')
 const path      = require('path')
 const exifTool  = require('exiftool-vendored').exiftool
-
+const winston   = require('winston')
 const Promise   = require('bluebird')
 
 const mkdirp        = Promise.promisify(require('mkdirp'))
 const hashFiles     = Promise.promisify(require('hash-files'))
 const lstatPromise  = Promise.promisify(fs.lstat)
 const renamePromise = Promise.promisify(fs.rename)
+
+
+let logger = new (winston.Logger)({
+  transports: [
+    new (winston.transports.Console)()
+  ]
+})
 
 class PhotoImport {
 
@@ -22,46 +27,42 @@ class PhotoImport {
   // Main entry point for iterating over folder files and starting the move
   processFolder(sourcePath, targetPath) {
 
+    logger.info(`Processing folder, ${new Date().toLocaleTimeString()} ${new Date().toLocaleDateString()} ${sourcePath}`)
+
     if(!(sourcePath && targetPath)){
-      throw(new Error('Source and target paths must be defined'))
+      logger.error('Source and target paths must be defined')
+      return
     }
 
     this.sourcePath     = sourcePath
     this.targetPath     = targetPath
-    this.duplicatesPath = path.join(this.sourcePath, '/duplicates')
+    this.duplicatesPath = path.join(this.sourcePath, '../duplicates')
 
     return this.getFileList(sourcePath)
     .then((paths) => {
-
-      Promise.each(paths, (filePath) => {
-        this.readExif(filePath)
-        // Swallow any errors - maybe report
-        .catch((err) => {
-          console.log('!', err)
-          return
-        })
+      return Promise.each(paths, (filePath) => {
+        return this.readExif(filePath)
         .then((exifData) => {
-          let dateFolder      = this.getFolderDate(exifData)
-          let fileName       = path.basename(filePath)
-          let fullTargetPath = path.join(this.targetPath, dateFolder, fileName)
-          // Move
-          return this.moveFile(
-            filePath,
-            fullTargetPath,
-            this.duplicatesPath
-          )
+          if(exifData !== null){
+            let dateFolder     = this.getFolderFromDate(exifData)
+            let fileName       = path.basename(filePath)
+            let fullTargetPath = path.join(this.targetPath, dateFolder, fileName)
+            
+            return this.moveFile(
+              filePath,
+              fullTargetPath,
+              this.duplicatesPath
+            )
+          }
         })
-        /*.then(() => {
-          success?
-        }*/
       })
       .then(() => {
-        console.log('all done!')
         this.closeExif()
       })
     })
+    // Catch all errors - these are logged more specifically in supporting methods
     .catch((err) => {
-      console.log('getFileList error', err)
+      logger.error('processFolder > error')
       this.closeExif()
     })
   }
@@ -72,6 +73,7 @@ class PhotoImport {
       let fullPaths = []
       fs.readdir(sourceDir, (err, files) => {
         if(err) {
+          logger.error(`getFileList > ${sourceDir}`)
           reject(err)
         } else {
           for(let f of files){
@@ -85,23 +87,27 @@ class PhotoImport {
 
   readExif(filePath) {
     return new Promise((resolve, reject) => {
-      exifTool
-      .read(filePath)
+      exifTool.read(filePath)
       .then((tags) => {
         let exifData = null
 
         if(tags.Error !== 'Unknown file type'){
           exifData = tags
+        } else {
+          logger.error(`readExif > no data: ${filePath}`)
         }
         resolve(exifData)
       })
-      .catch((err) => reject(err))
+      .catch((err) => {
+        logger.error(`readExif > bad path: ${filePath}`)
+        reject(err)
+      })
     })
     
   }
 
   // Returns formatted folder date based on EXIF
-  getFolderDate(exifTags) {
+  getFolderFromDate(exifTags) {
     let date  = this.getCreationDate(exifTags)
     let yr    = date.getFullYear()
     let mo    = date.getMonth() + 1
@@ -111,15 +117,15 @@ class PhotoImport {
   }
 
   moveFile(sourceFile, targetFile, duplicatesFolder) {
-
     // Make the target path
     let targetDir   = path.dirname(targetFile)
+    let isDuplicate = false
 
     // mkdirp - makes folders in folders if needed
     return mkdirp(targetDir)
     // Problem with making dir
     .catch((mkdirError) => {
-      console.log('mkdir error')
+      logger.error(`mkdir > ${targetDir}`)
     })
     .then(() => {
       return lstatPromise(targetFile)
@@ -134,6 +140,8 @@ class PhotoImport {
         // Make us a duplicates folder
         return mkdirp(duplicatesFolder)
         .then(() => {
+          // Just used for logging
+          isDuplicate = true
           // The target file now points to /duplicates
           return path.join(duplicatesFolder, path.basename(sourceFile))
         })
@@ -148,6 +156,12 @@ class PhotoImport {
     })
     // Continue with rename, using transformed filename
     .then((newTargetFile) => {
+      if(isDuplicate){
+        logger.info(`moveFile > duplicate: ${sourceFile}`)
+      } else {
+        logger.info(`moveFile > ${sourceFile} -> ${newTargetFile}`)
+      }
+      
       return renamePromise(sourceFile, newTargetFile)
     })
   }
@@ -207,7 +221,6 @@ class PhotoImport {
       })
     })
   }
-
 
   closeExif() {
     exifTool.end()

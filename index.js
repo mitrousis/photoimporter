@@ -1,3 +1,6 @@
+#! /usr/bin/env node
+
+
 const PhotoImport = require('./src/PhotoImport')
 
 let pi = new PhotoImport()
