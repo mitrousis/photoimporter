@@ -2,9 +2,7 @@
 
 const fs        = require('fs')
 const path      = require('path')
-//const util      = require('util')
 const exifTool  = require('exiftool-vendored').exiftool
-//const async     = require('async')
 
 const Promise   = require('bluebird')
 
@@ -32,26 +30,38 @@ class PhotoImport {
     this.targetPath     = targetPath
     this.duplicatesPath = path.join(this.sourcePath, '/duplicates')
 
-    this.getFileList(sourcePath)
+    return this.getFileList(sourcePath)
     .then((paths) => {
 
-      // Left off here, need to fix this since promise.all will reject all with only 1 bad apple
-      let exifDataPromises = paths.map(this.readExif)
-
-      Promise.all(exifDataPromises)
-      .then((exifTagsList) => {
-        exifTagsList.forEach((tags) => {
-          if(tags !== null) {
-            let folderDate = this.getFolderDate(tags)
-            
-          }
+      Promise.each(paths, (filePath) => {
+        this.readExif(filePath)
+        // Swallow any errors - maybe report
+        .catch((err) => {
+          console.log('!', err)
+          return
         })
-
+        .then((exifData) => {
+          let dateFolder      = this.getFolderDate(exifData)
+          let fileName       = path.basename(filePath)
+          let fullTargetPath = path.join(this.targetPath, dateFolder, fileName)
+          // Move
+          return this.moveFile(
+            filePath,
+            fullTargetPath,
+            this.duplicatesPath
+          )
+        })
+        /*.then(() => {
+          success?
+        }*/
+      })
+      .then(() => {
+        console.log('all done!')
         this.closeExif()
       })
     })
     .catch((err) => {
-      console.log(err)
+      console.log('getFileList error', err)
       this.closeExif()
     })
   }
