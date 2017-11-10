@@ -1,8 +1,9 @@
-const fs        = require('fs')
-const path      = require('path')
-const exifTool  = require('exiftool-vendored').exiftool
-const winston   = require('winston')
-const Promise   = require('bluebird')
+const fs               = require('fs')
+const path             = require('path')
+const exifTool         = require('exiftool-vendored').exiftool
+const winston          = require('winston')
+const recursiveReadDir = require('recursive-readdir')
+const Promise          = require('bluebird')
 
 const mkdirp        = Promise.promisify(require('mkdirp'))
 const hashFiles     = Promise.promisify(require('hash-files'))
@@ -36,6 +37,7 @@ class PhotoImport {
 
     this.sourcePath     = sourcePath
     this.targetPath     = targetPath
+    // Duplicates are always saved outside source path
     this.duplicatesPath = path.join(this.sourcePath, '../duplicates')
 
     return this.getFileList(sourcePath)
@@ -69,9 +71,15 @@ class PhotoImport {
 
   // Returns array of fully qualified paths
   getFileList(sourceDir) {
-    return new Promise((resolve, reject) => {
-      let fullPaths = []
-      fs.readdir(sourceDir, (err, files) => {
+    // Note - ignoring some files
+    return recursiveReadDir(sourceDir, ['.DS_Store'])
+    .catch((err) => {
+      logger.error(`getFileList > ${sourceDir}`)
+      return err
+    })
+      
+  }
+      /*fs.readdir(sourceDir, (err, files) => {
         if(err) {
           logger.error(`getFileList > ${sourceDir}`)
           reject(err)
@@ -81,9 +89,9 @@ class PhotoImport {
           }
           resolve(fullPaths)
         } 
-      })
-    })
-  }
+      })*/
+    //})
+  //}
 
   readExif(filePath) {
     return new Promise((resolve, reject) => {
