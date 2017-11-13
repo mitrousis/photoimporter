@@ -1,5 +1,8 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
 'use strict'
+
+// We're handling the config error messaging, don't need default
+process.env.SUPPRESS_NO_CONFIG_WARNING = true
 
 const argv        = require('yargs').argv
 const PhotoImport = require('./src/PhotoImport')
@@ -15,13 +18,14 @@ let targetPath
 
 // Pull from config
 if (!(argv.source && argv.target)){ 
-  sourcePath = config.get('sourcePath') 
-  targetPath = config.get('targetPath') 
 
-  if(!(sourcePath && targetPath)){
+  if(!(config.has('sourcePath') && config.has('targetPath'))){
     logger.error('Config paths not set')
     process.exit()
   }
+
+  sourcePath = config.get('sourcePath') 
+  targetPath = config.get('targetPath') 
 
 } else {
   // Pull from args
@@ -44,4 +48,4 @@ logger.info(`Processing images start at ${new Date().toLocaleTimeString()} ${new
   source: ${sourcePath} 
   target: ${targetPath}`)
   
-  pi.processFolder(sourcePath, targetPath)
+pi.processFolder(sourcePath, targetPath)

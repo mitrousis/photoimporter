@@ -1,13 +1,13 @@
 {
   "name": "photoimport",
-  "version": "0.1.0",
-  "description": "Do it.",
+  "version": "1.0.0",
+  "description": "Photo + video folder creation and organization.",
   "preferGlobal": true,
   "scripts": {
     "test": "mocha"
   },
   "bin": {
-    "photoimport": "photoimport.js"
+    "photoimport": "./index.js"
   },
   "dependencies": {
     "async": "^2.4.0",
