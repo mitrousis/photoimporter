@@ -40,7 +40,7 @@ if (!(argv.source && argv.target)){
     }
 
     logger.info('Saving config paths')
-    fs.writeFileSync(path.resolve('./config/default.json'), JSON.stringify(cfgJson))
+    fs.writeFileSync(path.resolve(__dirname, './config/default.json'), JSON.stringify(cfgJson))
   }
 }
 

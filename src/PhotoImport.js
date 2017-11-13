@@ -7,7 +7,8 @@ const recursiveReadDir = require('recursive-readdir')
 const Promise          = require('bluebird')
 const logger           = require('./Logger')
 
-const mkdirp        = Promise.promisify(require('mkdirp'))
+//const mkdirp        = Promise.promisify(require('mkdirp'))
+const mv            = Promise.promisify(require('mv'))
 const hashFiles     = Promise.promisify(require('hash-files'))
 const lstatPromise  = Promise.promisify(fs.lstat)
 const renamePromise = Promise.promisify(fs.rename)
@@ -58,7 +59,7 @@ class PhotoImport {
     })
     // Catch all errors - these are logged more specifically in supporting methods
     .catch((err) => {
-      logger.error('processFolder > error')
+      logger.error('processFolder > ', err)
       this.closeExif()
     })
   }
@@ -106,53 +107,91 @@ class PhotoImport {
 
   moveFile(sourceFile, targetFile, duplicatesFolder) {
     // Make the target path
-    let targetDir   = path.dirname(targetFile)
-    let isDuplicate = false
+    //let targetDir   = path.dirname(targetFile)
+    //let isDuplicate = false
 
     // mkdirp - makes folders in folders if needed
-    return mkdirp(targetDir)
+    //return mkdirp(targetDir)
     // Problem with making dir
-    .catch((mkdirError) => {
-      logger.error(`mkdir > ${targetDir}`)
-    })
+    // .catch((mkdirError) => {
+    //   logger.error(`mkdir > ${targetDir}`)
+    // })
+    // .then(() => {
+    //lstatPromise(targetFile)
+
+    return mv(sourceFile, targetFile, {mkdirp: true, clobber: false})
+    // Successful move
     .then(() => {
-      return lstatPromise(targetFile)
+      logger.info(`moveFile > ${sourceFile} -> ${targetFile}`)
     })
-    // File exists
-    .then((stats) => {
-      // Checkif actually the same file
-      return this.isSameFile(sourceFile, targetFile)
-    })
-    .then((isSameFile) => {
-      if(isSameFile){
-        // Make us a duplicates folder
-        return mkdirp(duplicatesFolder)
-        .then(() => {
-          // Just used for logging
-          isDuplicate = true
-          // The target file now points to /duplicates
-          return path.join(duplicatesFolder, path.basename(sourceFile))
+    .catch((err) => {
+      
+      // File exists, but could be different file (name conflict)
+      if(err.code == 'EEXIST') {
+        // Is same file hash
+        this.isSameFile(sourceFile, targetFile)
+        .then((isSameFile) => {
+
+          let newTargetFile
+
+          // Send to duplicates
+          if(isSameFile){
+            logger.info(`moveFile > found duplicate: ${sourceFile}`)
+
+            // The target file now points to /duplicates
+            newTargetFile = path.join(duplicatesFolder, path.basename(sourceFile))
+          } else {
+            logger.info(`moveFile > filename exists, but different data: ${sourceFile}`)
+            // Is just same name, so increment target file name
+            newTargetFile = this.incrementFilename(targetFile)
+          }
+
+          return this.moveFile(sourceFile, newTargetFile, duplicatesFolder)
         })
       } else {
-        // Is just same name, so increment target file name
-        return this.incrementFilename(targetFile)
+        logger.error('moveFile > ', err)
+        return err
       }
     })
-    // No existing file found
-    .catch(() => {
-      return targetFile
-    })
-    // Continue with rename, using transformed filename
-    .then((newTargetFile) => {
-      if(isDuplicate){
-        logger.info(`moveFile > duplicate: ${sourceFile}`)
-      } else {
-        logger.info(`moveFile > ${sourceFile} -> ${newTargetFile}`)
-      }
-      
-      return renamePromise(sourceFile, newTargetFile)
-    })
+    
   }
+    //})
+    // File exists
+    //.then((stats) => {
+      // Checkif actually the same file
+      
+    //})
+    // .then((isSameFile) => {
+    //   if(isSameFile){
+    //     // Make us a duplicates folder
+    //     //return mkdirp(duplicatesFolder)
+    //     //.then(() => {
+    //       // Just used for logging
+    //       isDuplicate = true
+    //       // The target file now points to /duplicates
+    //       return path.join(duplicatesFolder, path.basename(sourceFile))
+    //     //})
+    //   } else {
+    //     // Is just same name, so increment target file name
+    //     return this.incrementFilename(targetFile)
+    //   }
+    // })
+    // // No existing file found
+    // .catch(() => {
+    //   return targetFile
+    // })
+    // Continue with rename, using transformed filename
+    // .then((newTargetFile) => {
+    //   if(isDuplicate){
+    //     logger.info(`moveFile > duplicate: ${sourceFile}`)
+    //   } else {
+    //     logger.info(`moveFile > ${sourceFile} -> ${newTargetFile}`)
+    //   }
+      
+    //   return 
+    //   //return renamePromise(sourceFile, newTargetFile)
+    // })
+  //}
 
   incrementFilename(filename) {
     // Look for _1.jpg
