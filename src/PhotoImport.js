@@ -118,7 +118,6 @@ class PhotoImport {
     // })
     // .then(() => {
     //lstatPromise(targetFile)
-
     return mv(sourceFile, targetFile, {mkdirp: true, clobber: false})
     // Successful move
     .then(() => {
@@ -129,7 +128,7 @@ class PhotoImport {
       // File exists, but could be different file (name conflict)
       if(err.code == 'EEXIST') {
         // Is same file hash
-        this.isSameFile(sourceFile, targetFile)
+        return this.isSameFile(sourceFile, targetFile)
         .then((isSameFile) => {
 
           let newTargetFile
