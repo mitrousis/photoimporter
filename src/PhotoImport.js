@@ -1,6 +1,5 @@
 'use strict'
 
-const fs               = require('fs')
 const path             = require('path')
 const exifTool         = require('exiftool-vendored').exiftool
 const recursiveReadDir = require('recursive-readdir')
@@ -10,9 +9,6 @@ const logger           = require('./Logger')
 //const mkdirp        = Promise.promisify(require('mkdirp'))
 const mv            = Promise.promisify(require('mv'))
 const hashFiles     = Promise.promisify(require('hash-files'))
-const lstatPromise  = Promise.promisify(fs.lstat)
-const renamePromise = Promise.promisify(fs.rename)
-
 
 class PhotoImport {
 
@@ -151,46 +147,8 @@ class PhotoImport {
         logger.error('moveFile > ', err)
         return err
       }
-    })
-    
+    })    
   }
-    //})
-    // File exists
-    //.then((stats) => {
-      // Checkif actually the same file
-      
-    //})
-    // .then((isSameFile) => {
-    //   if(isSameFile){
-    //     // Make us a duplicates folder
-    //     //return mkdirp(duplicatesFolder)
-    //     //.then(() => {
-    //       // Just used for logging
-    //       isDuplicate = true
-    //       // The target file now points to /duplicates
-    //       return path.join(duplicatesFolder, path.basename(sourceFile))
-    //     //})
-    //   } else {
-    //     // Is just same name, so increment target file name
-    //     return this.incrementFilename(targetFile)
-    //   }
-    // })
-    // // No existing file found
-    // .catch(() => {
-    //   return targetFile
-    // })
-    // Continue with rename, using transformed filename
-    // .then((newTargetFile) => {
-    //   if(isDuplicate){
-    //     logger.info(`moveFile > duplicate: ${sourceFile}`)
-    //   } else {
-    //     logger.info(`moveFile > ${sourceFile} -> ${newTargetFile}`)
-    //   }
-      
-    //   return 
-    //   //return renamePromise(sourceFile, newTargetFile)
-    // })
-  //}
 
   incrementFilename(filename) {
     // Look for _1.jpg
@@ -230,6 +188,9 @@ class PhotoImport {
     // Found in recent camera and iPhone files
     } else if(exifTags.CreateDate !== undefined){
       dateNode = exifTags.CreateDate
+
+    } else if(exifTags.FileModifyDate !== undefined){
+      dateNode = exifTags.FileModifyDate
     }
 
     return new Date(dateNode.year, dateNode.month-1, dateNode.day, dateNode.hour, dateNode.minute, dateNode.second)
