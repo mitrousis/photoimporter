@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 'use strict'
 
-// We're handling the config error messaging, don't need default
-process.env.SUPPRESS_NO_CONFIG_WARNING = true
-
 const argv        = require('yargs').argv
 const PhotoImport = require('./src/PhotoImport')
-const config      = require('config')
 const path        = require('path')
 const logger      = require('./src/Logger')
 const fs          = require('fs')
+
+// We're handling the config error messaging, don't need default
+process.env.SUPPRESS_NO_CONFIG_WARNING = true
+process.env.NODE_CONFIG_DIR = path.join(__dirname, '/config/')
+
+const config      = require('config')
 
 let pi = new PhotoImport()
 
