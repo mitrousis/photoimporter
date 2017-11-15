@@ -1,13 +1,14 @@
 'use strict'
 
 const path             = require('path')
+const fs               = require('fs')
 const exifTool         = require('exiftool-vendored').exiftool
 const recursiveReadDir = require('recursive-readdir')
 const Promise          = require('bluebird')
 const logger           = require('./Logger')
+const childProcess     = require('child_process')
 
-//const mkdirp        = Promise.promisify(require('mkdirp'))
-const mv            = Promise.promisify(require('mv'))
+const mkdirp        = Promise.promisify(require('mkdirp'))
 const hashFiles     = Promise.promisify(require('hash-files'))
 
 class PhotoImport {
@@ -103,26 +104,21 @@ class PhotoImport {
 
   moveFile(sourceFile, targetFile, duplicatesFolder) {
     // Make the target path
-    //let targetDir   = path.dirname(targetFile)
+    let targetDir   = path.dirname(targetFile)
     //let isDuplicate = false
 
     // mkdirp - makes folders in folders if needed
-    //return mkdirp(targetDir)
+    return mkdirp(targetDir)
     // Problem with making dir
-    // .catch((mkdirError) => {
-    //   logger.error(`mkdir > ${targetDir}`)
-    // })
-    // .then(() => {
-    //lstatPromise(targetFile)
-    return mv(sourceFile, targetFile, {mkdirp: true, clobber: false})
-    // Successful move
-    .then(() => {
-      logger.info(`moveFile > ${sourceFile} -> ${targetFile}`)
+    .catch((mkdirError) => {
+      logger.error(`mkdir > ${targetDir}`)
     })
-    .catch((err) => {
-      
-      // File exists, but could be different file (name conflict)
-      if(err.code == 'EEXIST') {
+    .then(() => {
+      return this.execMove(sourceFile, targetFile)
+    })
+    // An error here is most likely existing file
+    .catch((copyError) => {
+      if(copyError.code == 'EEXIST') {
         // Is same file hash
         return this.isSameFile(sourceFile, targetFile)
         .then((isSameFile) => {
@@ -143,11 +139,42 @@ class PhotoImport {
 
           return this.moveFile(sourceFile, newTargetFile, duplicatesFolder)
         })
+      // Some other copy error, bubble
       } else {
-        logger.error('moveFile > ', err)
-        return err
+        return copyError
       }
-    })    
+    })
+    // Successful move
+    .then(() => {
+      logger.info(`moveFile > ${sourceFile} -> ${targetFile}`)
+    })  
+  }
+
+  // Used to ensure that the properties of the file (birthtime / mtime) are preserved
+  execMove(sourceFile, targetFile) {
+    return new Promise((resolve, reject) => {
+      childProcess.execFile('cp', ['-pnv', sourceFile, targetFile], (error, stdout, stderr) => {
+        // Errors will be thrown if file exists as well
+        if(error){
+          if(stdout.indexOf('not overwritten') > -1){
+            let exists = new Error()
+            exists.code = 'EEXIST'
+
+            reject(exists)
+          } else {
+            reject(error)
+          }
+        } else {
+          fs.unlink(sourceFile, (error) => {
+            if(error){
+              reject(error)
+            } else {
+              resolve()
+            }
+          })
+        }
+      })
+    })
   }
 
   incrementFilename(filename) {

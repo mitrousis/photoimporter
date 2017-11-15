@@ -3,6 +3,10 @@ const photoimport = require('../src/PhotoImport')
 const fs          = require('fs')
 const proc        = require('child_process')
 const path        = require('path')
+const logger      = require('../src/Logger')
+
+// Turn off logging
+logger.clear()
 
 let PhotoImport = new photoimport()
 let testAssetFolder  = __dirname + '/assets'
@@ -101,9 +105,9 @@ describe('PhotoImport', function() {
     })
 
     it('should return yyyy-mm format when falling back to File Modification Date/Time : image', function(){
-      return PhotoImport.readExif(`${sourceFileFolder}/IMG_0552.JPG`)
+      return PhotoImport.readExif(`${sourceFileFolder}/noExif.jpg`)
       .then(function(tags) {
-        assert.equal(PhotoImport.getFolderFromDate(tags), '2017-09')
+        assert.equal(PhotoImport.getFolderFromDate(tags), '2017-11')
       })
     })
 
@@ -130,6 +134,38 @@ describe('PhotoImport', function() {
       })
     })
 
+  })
+
+  describe('#execMove()', function(){
+    before(function() {
+      proc.execSync(`cp -p ${sourceFileFolder}/iphone_photo.jpg ${sourceFileFolder}/execMoveSource.jpg`)
+      proc.execSync(`cp -p ${sourceFileFolder}/iphone_photo.jpg ${sourceFileFolder}/execMoveSource2.jpg`)
+    })
+
+    it('should make a copy of a file, preserving creation time', function(){
+
+      // Should match up after the copy
+      let basetime = fs.lstatSync(`${sourceFileFolder}/execMoveSource.jpg`).basetime
+
+      return PhotoImport.execMove(`${sourceFileFolder}/execMoveSource.jpg`, `${targetFileFolder}/execMoveTarget.jpg`)
+      .catch(function(err) {
+        throw(err)
+      })
+      .then(function(){
+        assert.ok(fs.existsSync(`${targetFileFolder}/execMoveTarget.jpg`))
+      })
+      .then(function(){
+        assert.equal(fs.lstatSync(`${targetFileFolder}/execMoveTarget.jpg`).basetime, basetime)
+      })
+    })
+
+    it('should throw an EEXIST error code for existing file', function(){
+      
+      return PhotoImport.execMove(`${sourceFileFolder}/execMoveSource2.jpg`, `${targetFileFolder}/execMoveTarget.jpg`)
+      .catch(function(err) {
+        assert.equal(err.code, 'EEXIST')
+      })
+    })
   })
 
   describe('#moveFile()', function(){
@@ -212,7 +248,7 @@ describe('PhotoImport', function() {
 
   })
 
-  /*describe('#processFolder()', function() {
+  describe('#processFolder()', function() {
     // Trash everything from previous tests to ensure clean data
     before(function() {    
       teardownFileStructure()
@@ -229,5 +265,5 @@ describe('PhotoImport', function() {
     it('should process subfolders', function() {
       assert.ok(fs.existsSync(`${targetFileFolder}/2017-11/iphone_photo_sub.jpg`), 'Processed subfolder')
     }) 
-  })*/
+  })
 })
