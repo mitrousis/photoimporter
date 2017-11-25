@@ -179,8 +179,8 @@ describe('PhotoImport', function() {
     it('should skip exact same file names', function(){
      
       return PhotoImport.moveFile(`${sourceFileFolder}/move_me_2017-11.jpg`, `${sourceFileFolder}/move_me_2017-11.jpg`)
-      .catch(function(err){
-        assert.ok(err instanceof Error)
+      .then(function(){
+        assert.ok(true)
       })
     })
 

@@ -56,7 +56,7 @@ class PhotoImport {
     })
     // Catch all errors - these are logged more specifically in supporting methods
     .catch((err) => {
-      logger.error('processFolder > ', err)
+      logger.error('processFolder > ', err.message)
       this.closeExif()
     })
   }
@@ -104,8 +104,8 @@ class PhotoImport {
 
   moveFile(sourceFile, targetFile, duplicatesFolder) {
     if(sourceFile == targetFile){
-      logger.warn('moveFile > files are the same, skipping')
-      return Promise.reject(new Error('Same file name'))
+      logger.warn(`moveFile > files are the same, skipping: ${sourceFile}`)
+      return Promise.resolve()
     }
     // Make the target path
     let targetDir   = path.dirname(targetFile)
