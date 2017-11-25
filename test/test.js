@@ -176,6 +176,14 @@ describe('PhotoImport', function() {
       proc.execSync(`cp -p ${sourceFileFolder}/iphone_photo_2.jpg ${targetFileFolder}/iphone_photo_increment.jpg`)
     })
 
+    it('should skip exact same file names', function(){
+     
+      return PhotoImport.moveFile(`${sourceFileFolder}/move_me_2017-11.jpg`, `${sourceFileFolder}/move_me_2017-11.jpg`)
+      .catch(function(err){
+        assert.ok(err instanceof Error)
+      })
+    })
+
     it('should create a proper yyyy-mm folder and move the file', function(){
       // Hard coding date for testing
       let dateFolder = '2017-11'

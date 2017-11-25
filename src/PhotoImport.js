@@ -103,6 +103,10 @@ class PhotoImport {
   }
 
   moveFile(sourceFile, targetFile, duplicatesFolder) {
+    if(sourceFile == targetFile){
+      logger.warn('moveFile > files are the same, skipping')
+      return Promise.reject(new Error('Same file name'))
+    }
     // Make the target path
     let targetDir   = path.dirname(targetFile)
     //let isDuplicate = false
