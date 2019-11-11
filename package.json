@@ -25,5 +25,13 @@
   "devDependencies": {
     "mocha": "^3.5.0",
     "standard": "^14.0.2"
+  },
+  "standard": {
+    "globals": [ 
+      "describe", 
+      "before",
+      "after",
+      "it" 
+    ]
   }
 }
