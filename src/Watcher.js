@@ -1,6 +1,7 @@
 const chokidar = require('chokidar')
 const debounce = require('throttle-debounce').debounce
 const EventEmitter = require('events')
+const path = require('path')
 
 class Watcher extends EventEmitter {
   constructor () {
@@ -29,6 +30,21 @@ class Watcher extends EventEmitter {
     if (this._chokidarWatcher) {
       this._chokidarWatcher.close()
     }
+  }
+
+  // This is just a test currently
+  watchForMountedVolume (volumeName) {
+    // One-liner for current directory
+    const watchVolumePath = path.join('/Volumes/', volumeName)
+
+    this._chokidarWatcher = chokidar.watch(watchVolumePath, {
+      usePolling: true,
+      interval: 1000
+    })
+
+    this._chokidarWatcher.on('add', (event, path) => {
+      console.log(event, path)
+    })
   }
 }
 

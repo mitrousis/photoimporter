@@ -47,5 +47,5 @@ describe('Watcher', () => {
       watcher.removeAllListeners('change')
       done()
     })
-  }, 10000)
+  }, 8000)
 })
