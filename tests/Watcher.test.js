@@ -17,19 +17,23 @@ describe('Watcher', () => {
 
   test('Should wait until files stop add events', (done) => {
     const watcher = new Watcher()
-    watcher._changeTriggerDelay = 2000
-    watcher._changePollingInterval = 100
+
     watcher.watch(testWatchDirPath)
+
+    const expectedFileList = [
+      path.join(testWatchDirPath, 'file_a.txt'),
+      path.join(testWatchDirPath, 'file_b.txt')
+    ]
 
     const startTime = new Date().getTime()
     const writeDelay = 250
 
     setTimeout(() => {
-      fse.writeFileSync(path.join(testWatchDirPath, 'file_a.txt'), 'a', { encoding: 'utf8' })
+      fse.writeFileSync(expectedFileList[0], 'a', { encoding: 'utf8' })
     }, writeDelay)
 
     setTimeout(() => {
-      fse.writeFileSync(path.join(testWatchDirPath, 'file_b.txt'), 'b', { encoding: 'utf8' })
+      fse.writeFileSync(expectedFileList[1], 'b', { encoding: 'utf8' })
     }, writeDelay * 2)
 
     // Should only happen once
@@ -38,14 +42,15 @@ describe('Watcher', () => {
       // The debounce should ensure that the change event only happens after files stop changing
       expect(delayTime).toBeGreaterThan(watcher._changeTriggerDelay + writeDelay * 2)
       expect(changedDir).toEqual(testWatchDirPath)
-      expect(fse.readdirSync(testWatchDirPath)).toEqual(expect.arrayContaining([
-        'file_a.txt',
-        'file_b.txt'
-      ]))
+      expect(watcher.fileList).toEqual(
+        expect.arrayContaining(expectedFileList)
+      )
 
       watcher.stop()
-      watcher.removeAllListeners('change')
-      done()
+        .then(() => {
+          watcher.removeAllListeners('change')
+          done()
+        })
     })
   }, 8000)
 })

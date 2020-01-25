@@ -1,0 +1,55 @@
+[
+ {
+  "enumerator": "DiskArbitration",
+  "busType": "SATA",
+  "busVersion": null,
+  "device": "/dev/disk0",
+  "devicePath": "IODeviceTree:/PCI0@0/SATA@1F,2/PRT0@0/PMP@0",
+  "raw": "/dev/rdisk0",
+  "description": "APPLE SSD SD256E Media",
+  "error": null,
+  "size": 251000193024,
+  "blockSize": 512,
+  "logicalBlockSize": 512,
+  "mountpoints": [],
+  "isReadOnly": false,
+  "isSystem": true,
+  "isVirtual": false,
+  "isRemovable": false,
+  "isCard": false,
+  "isSCSI": true,
+  "isUSB": false,
+  "isUAS": null
+ },
+ {
+  "enumerator": "DiskArbitration",
+  "busType": "SATA",
+  "busVersion": null,
+  "device": "/dev/disk1",
+  "devicePath": "IODeviceTree:/PCI0@0/SATA@1F,2/PRT0@0/PMP@0",
+  "raw": "/dev/rdisk1",
+  "description": "AppleAPFSMedia",
+  "error": null,
+  "size": 250790436864,
+  "blockSize": 4096,
+  "logicalBlockSize": 4096,
+  "mountpoints": [
+   {
+    "path": "/",
+    "label": "Macintosh HD"
+   },
+   {
+    "path": "/private/var/vm",
+    "label": "VM"
+   }
+  ],
+  "isReadOnly": false,
+  "isSystem": true,
+  "isVirtual": false,
+  "isRemovable": false,
+  "isCard": false,
+  "isSCSI": true,
+  "isUSB": false,
+  "isUAS": null
+ }
+]
