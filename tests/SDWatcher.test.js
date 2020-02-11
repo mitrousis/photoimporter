@@ -24,6 +24,34 @@ describe('SDWatcher', () => {
     )
   })
 
+  /// This isn't working
+  test.only('#_nextDrivePoll() should update know drive list when drive is found', (done) => {
+    const sdWatcher = new SDWatcher()
+    const expectedDrive1 = {
+      device: '/dev/disk2',
+      path: '/Volumes/NEW DRIVE',
+      name: 'NEW DRIVE'
+    }
+
+    // Mock function
+    sdWatcher._getMountedSDCards = function () {
+      return [
+        expectedDrive1
+      ]
+    }
+
+    expect(sdWatcher._nextDrivePoll())
+      .resolves.toEqual(undefined)
+      .then(() => {
+        expect(sdWatcher._knownSDCards).toEqual(
+          expect.arrayContaining([
+            sdWatcher
+          ])
+        )
+        done()
+      })
+  })
+
   describe('#_compareDrivesStatus()', () => {
     let sdWatcher, expectedDrive1, expectedDrive2
 
@@ -42,7 +70,7 @@ describe('SDWatcher', () => {
       }
     })
 
-    test.only('should return one unique new drive', () => {
+    test('should return one unique new drive', () => {
       const currDrivesStatus = []
       const newDrivesStatus = [expectedDrive1]
 
@@ -51,21 +79,21 @@ describe('SDWatcher', () => {
       )
     })
 
-    test.only('should return no unique drives when there is an existing drive', () => {
+    test('should return no unique drives when there is an existing drive', () => {
       const currDrivesStatus = [expectedDrive1]
       const newDrivesStatus = [expectedDrive1]
 
       expect(sdWatcher._compareDrivesStatus(currDrivesStatus, newDrivesStatus)).toHaveLength(0)
     })
 
-    test.only('should return no unique drives when one is removed', () => {
+    test('should return no unique drives when one is removed', () => {
       const currDrivesStatus = [expectedDrive1]
       const newDrivesStatus = []
 
       expect(sdWatcher._compareDrivesStatus(currDrivesStatus, newDrivesStatus)).toHaveLength(0)
     })
 
-    test.only('should return two unique drives', () => {
+    test('should return two unique drives', () => {
       const currDrivesStatus = []
       const newDrivesStatus = [expectedDrive1, expectedDrive2]
 

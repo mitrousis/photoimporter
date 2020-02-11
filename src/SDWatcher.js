@@ -1,19 +1,44 @@
 const drivelist = require('drivelist')
 const Watcher = require('./Watcher')
+const logger = require('./Logger')
 
 class SDWatcher extends Watcher {
   constructor () {
     super()
 
-    this._sdCardPollingInterval = 4000
+    this._sdCardPollingInterval = 2000
     this._sdCardPollingTimeoutRef = null
-    this._detectedDrives = []
+    this._knownSDCards = []
   }
 
-  pollForSDCard () {
-    this._sdCardPollingTimeoutRef = setTimeout(() => {
+  watch () {
+    this._nextDrivePoll()
+  }
 
-    })
+  async _nextDrivePoll () {
+    const newSDCards = await this._getNewSDCards()
+
+    if (newSDCards.length > 0) {
+      // Start watching
+      newSDCards.forEach((newCard) => {
+        logger.info('Found new SD card:', newCard)
+        const watchPath = newCard.path
+        super.watch(watchPath)
+      })
+    }
+
+    this._knownSDCards = this._knownSDCards.concat(newSDCards)
+
+    // Start polling over again
+    this._sdCardPollingTimeoutRef = setTimeout(() => {
+      this._nextDrivePoll()
+    }, this._sdCardPollingInterval)
+  }
+
+  async _getNewSDCards () {
+    const currDriveList = await drivelist.list()
+    const mountedDrivesStatus = this._getMountedSDCards(currDriveList)
+    return this._compareDrivesStatus(this._knownSDCards, mountedDrivesStatus)
   }
 
   _compareDrivesStatus (currDrivesStatus, newDrivesStatus) {
@@ -56,10 +81,3 @@ class SDWatcher extends Watcher {
 }
 
 module.exports = SDWatcher
-// drivelist.list()
-//   .then((drives) => {
-//     console.log(JSON.stringify(drives, null, 1))
-//     // drives.forEach((drive) => {
-//     //   console.log(JSON.stringify(drive.mountpoints, null, 1))
-//     // })
-//   })
