@@ -10,7 +10,7 @@ class Watcher extends EventEmitter {
     this._fileList = []
   }
 
-  watch (watchDirPath, depth) {
+  watch (watchDirPath, depth = 99) {
     // One-liner for current directory
     this._chokidarWatcher = chokidar.watch(watchDirPath, {
       awaitWriteFinish: true,

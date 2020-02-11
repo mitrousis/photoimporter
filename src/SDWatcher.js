@@ -1,19 +1,32 @@
-const path = require('path')
 const drivelist = require('drivelist')
-const EventEmitter = require('events')
+const Watcher = require('./Watcher')
 
-class SDWatcher extends EventEmitter {
+class SDWatcher extends Watcher {
   constructor () {
     super()
 
     this._sdCardPollingInterval = 4000
     this._sdCardPollingTimeoutRef = null
+    this._detectedDrives = []
   }
 
   pollForSDCard () {
     this._sdCardPollingTimeoutRef = setTimeout(() => {
 
     })
+  }
+
+  _compareDrivesStatus (currDrivesStatus, newDrivesStatus) {
+    const foundNewDrives = newDrivesStatus.filter((newDrive) => {
+      // Checks if this drive path is already in list
+      const found = currDrivesStatus.findIndex((currDrive) => {
+        return currDrive.path === newDrive.path
+      })
+
+      return found
+    })
+
+    return foundNewDrives
   }
 
   /**

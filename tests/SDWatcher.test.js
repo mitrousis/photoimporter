@@ -1,7 +1,3 @@
-
-// const path = require('path')
-// const fse = require('fs-extra')
-
 const SDWatcher = require('../src/SDWatcher')
 const driveListNoSD = require('./_fixtures/drivelist-no-sd.json')
 const driveListWithSD = require('./_fixtures/drivelist-with-sd.json')
@@ -26,5 +22,56 @@ describe('SDWatcher', () => {
         }
       ])
     )
+  })
+
+  describe('#_compareDrivesStatus()', () => {
+    let sdWatcher, expectedDrive1, expectedDrive2
+
+    beforeAll(() => {
+      sdWatcher = new SDWatcher()
+      expectedDrive1 = {
+        device: '/dev/disk2',
+        path: '/Volumes/NEW DRIVE',
+        name: 'NEW DRIVE'
+      }
+
+      expectedDrive2 = {
+        device: '/dev/disk3',
+        path: '/Volumes/NEW DRIVE 2',
+        name: 'NEW DRIVE 2'
+      }
+    })
+
+    test.only('should return one unique new drive', () => {
+      const currDrivesStatus = []
+      const newDrivesStatus = [expectedDrive1]
+
+      expect(sdWatcher._compareDrivesStatus(currDrivesStatus, newDrivesStatus)).toEqual(
+        expect.arrayContaining([expectedDrive1])
+      )
+    })
+
+    test.only('should return no unique drives when there is an existing drive', () => {
+      const currDrivesStatus = [expectedDrive1]
+      const newDrivesStatus = [expectedDrive1]
+
+      expect(sdWatcher._compareDrivesStatus(currDrivesStatus, newDrivesStatus)).toHaveLength(0)
+    })
+
+    test.only('should return no unique drives when one is removed', () => {
+      const currDrivesStatus = [expectedDrive1]
+      const newDrivesStatus = []
+
+      expect(sdWatcher._compareDrivesStatus(currDrivesStatus, newDrivesStatus)).toHaveLength(0)
+    })
+
+    test.only('should return two unique drives', () => {
+      const currDrivesStatus = []
+      const newDrivesStatus = [expectedDrive1, expectedDrive2]
+
+      expect(sdWatcher._compareDrivesStatus(currDrivesStatus, newDrivesStatus)).toEqual(
+        expect.arrayContaining([expectedDrive1, expectedDrive2])
+      )
+    })
   })
 })
