@@ -15,6 +15,11 @@ class SDWatcher extends Watcher {
     this._nextDrivePoll()
   }
 
+  stop () {
+    clearTimeout(this._sdCardPollingTimeoutRef)
+    return super.stop()
+  }
+
   async _nextDrivePoll () {
     const newSDCards = await this._getNewSDCards()
 

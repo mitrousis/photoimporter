@@ -25,7 +25,7 @@ describe('SDWatcher', () => {
   })
 
   /// This isn't working
-  test.only('#_nextDrivePoll() should update know drive list when drive is found', (done) => {
+  test('#_nextDrivePoll() should update known drive list when drive is found', (done) => {
     const sdWatcher = new SDWatcher()
     const expectedDrive1 = {
       device: '/dev/disk2',
@@ -45,10 +45,13 @@ describe('SDWatcher', () => {
       .then(() => {
         expect(sdWatcher._knownSDCards).toEqual(
           expect.arrayContaining([
-            sdWatcher
+            expectedDrive1
           ])
         )
-        done()
+        sdWatcher.stop()
+          .then(() => {
+            done()
+          })
       })
   })
 
