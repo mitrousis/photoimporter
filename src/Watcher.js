@@ -47,22 +47,6 @@ class Watcher extends EventEmitter {
   get fileList () {
     return this._fileList
   }
-
-  // This is just a test currently
-  // watchForMountedVolume (volumeName) {
-  //   // One-liner for current directory
-  //   const watchVolumePath = path.join('/Volumes/')
-
-  //   this._chokidarWatcher = chokidar.watch(watchVolumePath, {
-  //     usePolling: true,
-  //     interval: 1000,
-  //     depth: 0
-  //   })
-
-  //   this._chokidarWatcher.on('addDir', (event, path) => {
-  //     console.log(event, path)
-  //   })
-  // }
 }
 
 module.exports = Watcher
