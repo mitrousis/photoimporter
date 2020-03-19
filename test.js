@@ -1,8 +1,34 @@
-const SDWatcher = require('./src/SDWatcher')
+const fse = require('fs-extra')
 
-const watch = new SDWatcher()
+// async function doit () {
+//   try {
+//     await fse.move('./fileA.txt', './fileC.txt', {
+//       overwrite: false
+//     })
+//   } catch (error) {
+//     console.log(error.code)
+//   }
+// }
 
-watch.watch()
+async function doit () {
+  try {
+    await fse.copy('./fileB.txt', './fileC.txt', {
+      overwrite: false,
+      errorOnExist: true,
+      preserveTimestamps: true
+    })
+  } catch (error) {
+    console.log(error.message)
+  }
+}
+
+doit()
+
+// const SDWatcher = require('./src/SDWatcher')
+
+// const watch = new SDWatcher()
+
+// watch.watch()
 // async function f () {
 //   const driveStat = await watch._checkForNewDrives()
 
