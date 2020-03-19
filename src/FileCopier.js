@@ -12,18 +12,57 @@ class FileCopier extends EventListener {
     this._duplicatesDir = ''
   }
 
+  set duplicatesDir (dirPath) {
+    fse.mkdirpSync(dirPath)
+    this._duplicatesDir = dirPath
+  }
+
+  get duplicatesDir () {
+    return this._duplicatesDir
+  }
+
   /**
-   * Append more files to copy
-   * @param {array|string} filePaths
+   * Formats a file queue item, adding the target path
+   * Optionally will update the item in-place instead of appending
+   * @param {string} source
+   * @param {string} destination
+   * @param {boolean} moveFile
+   * @param {boolean} preserveDuplicate
+   * @param {object} updateInPlace
+   * @returns {object}
    */
-  addToQueue ({
+  addToQueue (
     source,
     destination,
     moveFile = false,
-    preserveDuplicate = false
-  }) {
-    // Add the passed options to the queue
-    this._fileQueue = this._fileQueue.concat(...arguments)
+    preserveDuplicate = false,
+    updateInPlace = null
+  ) {
+    // If destination is a folder, append a file name
+    // This is mostly to keep all the logic in processing the same
+    // and always expect a file in the destination
+    const sourceDetails = path.parse(source)
+    const destDetails = path.parse(destination)
+
+    // No extension, assume a dir
+    if (destDetails.ext === '') {
+      destination = path.join(destination, sourceDetails.base)
+    }
+
+    const item = {
+      source,
+      destination,
+      moveFile,
+      preserveDuplicate
+    }
+
+    if (updateInPlace) {
+      Object.assign(updateInPlace, item)
+    } else {
+      this._fileQueue.push(item)
+    }
+
+    return item
   }
 
   /**
@@ -52,31 +91,43 @@ class FileCopier extends EventListener {
           preserveTimestamps: true
         })
       }
-    } catch (error) {
-      let newDestination
 
+      fileQueue.shift()
+      return true
+    } catch (error) {
       if (error.message.match(/already exists/)) {
         // Verify that the destination is truly a dupe
         if (fileParams.preserveDuplicate) {
-          // These are the same hash
+          // These are the same hash, move to dupes folder
+          // and overwrite any existing dupes
           if (this._compareFiles(fileParams.source, fileParams.destination)) {
-            newDestination = this._duplicatesDir
+            this.addToQueue(
+              fileParams.source,
+              this._duplicatesDir,
+              fileParams.moveFile,
+              false,
+              fileParams
+            )
           } else {
             // Files were different hashes, but same filename. Increment filename.
-            newDestination = this._incrementFilename(fileParams.destination)
+            const newDestination = this._incrementFilename(fileParams.destination)
+            this.addToQueue(
+              fileParams.source,
+              newDestination,
+              fileParams.moveFile,
+              fileParams.preserveDuplicate,
+              fileParams
+            )
           }
-          // Rename the destination in-place, but don't modify the array
-          fileParams.destination = newDestination
-          return
+          return false
         }
       } else {
         // For all other reasons it couldn't be moved
-        console.log('Couldnt move message')
+        throw error
       }
     }
 
     // Was successful or couldn't be moved
-    fileQueue.shift()
 
     // fse.copySync(from, to, {
     //   overwrite: false
