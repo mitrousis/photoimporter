@@ -37,18 +37,17 @@ describe('Watcher', () => {
     }, writeDelay * 2)
 
     // Should only happen once
-    watcher.on('change', (changedDir) => {
+    watcher.on(Watcher.EVENT_FILE_LIST_UPDATED, (updatedFileList) => {
       const delayTime = new Date().getTime() - startTime
       // The debounce should ensure that the change event only happens after files stop changing
       expect(delayTime).toBeGreaterThan(watcher._changeTriggerDelay + writeDelay * 2)
-      expect(changedDir).toEqual(testWatchDirPath)
-      expect(watcher.fileList).toEqual(
+      expect(updatedFileList).toEqual(
         expect.arrayContaining(expectedFileList)
       )
 
       watcher.stop()
         .then(() => {
-          watcher.removeAllListeners('change')
+          watcher.removeAllListeners(Watcher.EVENT_FILE_LIST_UPDATED)
           done()
         })
     })

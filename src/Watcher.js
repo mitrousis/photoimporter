@@ -1,5 +1,5 @@
 const chokidar = require('chokidar')
-const debounce = require('throttle-debounce').debounce
+const { debounce } = require('throttle-debounce')
 const EventEmitter = require('events')
 const Logger = require('./Logger')
 
@@ -7,26 +7,36 @@ class Watcher extends EventEmitter {
   constructor () {
     super()
     this._changeTriggerDelay = 2000
-    this._changePollingInterval = 10000
-    this._fileList = []
+    // this._changePollingInterval = 10000
+    this._lastFileList = []
   }
 
+  /**
+   * Listens for changes via chokidar
+   * then will update the file list once changes stop
+   * @param {string|array} watchDirPath
+   * @param {number} depth
+   */
   watch (watchDirPath, depth = 99) {
     Logger.info(`Watching path ${watchDirPath}`, 'Watcher')
-    // One-liner for current directory
-    this._chokidarWatcher = chokidar.watch(watchDirPath, {
-      awaitWriteFinish: true,
-      depth
+    // If the chokidar instance exists, call 'add'
+    if (this._chokidarWatcher) {
+      this._chokidarWatcher.add(watchDirPath)
+    } else {
+      this._chokidarWatcher = chokidar.watch(watchDirPath, {
+        awaitWriteFinish: true,
+        depth
       // usePolling: true,
       // interval: this._changePollingInterval,
       // binaryInterval: this._changePollingInterval
-    })
+      })
 
-    this._chokidarWatcher.on('add', (path) => {
-      this._processAddedFile(path)
-      // Debounce the "add" events to trigger copying process once
-      debounce(this._changeTriggerDelay, () => this.emit('change', watchDirPath))()
-    })
+      this._chokidarWatcher.on('add', (path) => {
+        this._lastFileList.push(path)
+        // Debounce the "add" events to trigger copying process once
+        debounce(this._changeTriggerDelay, () => this._onFileListUpdated())()
+      })
+    }
   }
 
   stop () {
@@ -40,13 +50,19 @@ class Watcher extends EventEmitter {
     return stopPromise
   }
 
-  _processAddedFile (path) {
-    this._fileList.push(path)
+  /**
+   * Emits all the last updated files, then resets the list
+   */
+  _onFileListUpdated () {
+    this.emit(Watcher.EVENT_FILE_LIST_UPDATED, this._lastFileList)
+    this._lastFileList = []
   }
 
   get fileList () {
     return this._fileList
   }
 }
+
+Watcher.EVENT_FILE_LIST_UPDATED = 'file_list_updated'
 
 module.exports = Watcher
