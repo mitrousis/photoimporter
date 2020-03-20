@@ -9,6 +9,8 @@ class Watcher extends EventEmitter {
     this._changeTriggerDelay = 2000
     // this._changePollingInterval = 10000
     this._lastFileList = []
+
+    this._onFileListUpdatedDebounced = debounce(this._changeTriggerDelay, this._onFileListUpdated)
   }
 
   /**
@@ -33,8 +35,7 @@ class Watcher extends EventEmitter {
 
       this._chokidarWatcher.on('add', (path) => {
         this._lastFileList.push(path)
-        // Debounce the "add" events to trigger copying process once
-        debounce(this._changeTriggerDelay, () => this._onFileListUpdated())()
+        this._onFileListUpdatedDebounced()
       })
     }
   }
@@ -52,6 +53,7 @@ class Watcher extends EventEmitter {
 
   /**
    * Emits all the last updated files, then resets the list
+   * Debounce the "add" events to trigger copying process once
    */
   _onFileListUpdated () {
     this.emit(Watcher.EVENT_FILE_LIST_UPDATED, this._lastFileList)

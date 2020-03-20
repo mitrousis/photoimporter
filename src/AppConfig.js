@@ -5,12 +5,16 @@ const fse = require('fs-extra')
 
 class AppConfig {
   constructor () {
-    const configStore = new Configstore('photoimporter')
+    this._configStore = new Configstore('photoimporter')
 
     /** @type {String|Array} */
-    let source = argv.source || argv.s || configStore.get('source') || []
-    const destination = argv.destination || argv.d || configStore.get('destination') || null
-    const watch = argv.watch || configStore.get('watch') || false
+    let source = argv.source || argv.s || this._configStore.get('source') || []
+    const destination = argv.destination || argv.d || this._configStore.get('destination') || null
+
+    // '--watch' must be explicitly set to 'false' to stop watching
+    let watch = this._configStore.get('watch') || false
+    if (argv.watch === 'false') watch = false
+    if (argv.watch === true || argv.watch === 'true') watch = true
 
     if (typeof source === 'string') source = [].concat(source.split(','))
 
@@ -40,9 +44,21 @@ class AppConfig {
     Logger.verbose(`Using destination directory: ${destination}`, 'AppConfig')
     Logger.verbose(`Watch for changes: ${watch}`, 'AppConfig')
 
-    configStore.set('source', source)
-    configStore.set('destination', destination)
-    configStore.set('watch', watch)
+    this._configStore.set('source', source)
+    this._configStore.set('destination', destination)
+    this._configStore.set('watch', watch)
+  }
+
+  get source () {
+    return this._configStore.get('source')
+  }
+
+  get destination () {
+    return this._configStore.get('destination')
+  }
+
+  get shouldWatch () {
+    return this._configStore.get('watch')
   }
 }
 
