@@ -63,47 +63,43 @@ describe('FileCopier', () => {
     })
   })
 
-  describe.only('#_processNextFile()', () => {
-    test('#_processNextFile() should copy a file successfully', async () => {
+  describe('#_processQueueItem()', () => {
+    test('#_processQueueItem() should copy a file successfully', async () => {
       const source = path.join(testFolder, 'sourceFile1.txt')
       const destination = path.join(testFolderDest, 'destFile1.txt')
 
       fse.writeFileSync(source, 'some data')
 
-      const success = await fc._processNextFile([
-        {
-          source,
-          destination,
-          moveFile: false,
-          preserveDuplicate: true
-        }
-      ])
+      const success = await fc._processQueueItem({
+        source,
+        destination,
+        moveFile: false,
+        preserveDuplicate: true
+      })
 
       expect(success).toEqual(true)
       expect(fse.existsSync(destination)).toEqual(true)
     })
 
-    test('#_processNextFile() should move a file successfully', async () => {
+    test('#_processQueueItem() should move a file successfully', async () => {
       const source = path.join(testFolder, 'sourceFile2.txt')
       const destination = path.join(testFolderDest, 'destFile2.txt')
 
       fse.writeFileSync(source, 'some data')
 
-      const success = await fc._processNextFile([
-        {
-          source,
-          destination,
-          moveFile: true,
-          preserveDuplicate: true
-        }
-      ])
+      const success = await fc._processQueueItem({
+        source,
+        destination,
+        moveFile: true,
+        preserveDuplicate: true
+      })
 
       expect(success).toEqual(true)
       expect(fse.existsSync(destination)).toEqual(true)
       expect(fse.existsSync(source)).toEqual(false)
     })
 
-    test('#_processNextFile() should return false and rename destination when duplicate filename is found', async () => {
+    test('#_processQueueItem() should return false and rename destination when duplicate filename is found', async () => {
       const source = path.join(testFolder, 'sourceFile3.txt')
       const destination = path.join(testFolderDest, 'destFile3.txt')
       const fileParams = {
@@ -116,7 +112,7 @@ describe('FileCopier', () => {
       fse.writeFileSync(source, 'some data')
       fse.writeFileSync(destination, 'some data 2')
 
-      const success = await fc._processNextFile([fileParams])
+      const success = await fc._processQueueItem(fileParams)
 
       expect(success).toEqual(false)
       expect(fileParams.destination).toEqual(path.join(testFolderDest, 'destFile3_00.txt'))
@@ -124,7 +120,7 @@ describe('FileCopier', () => {
       expect(fse.existsSync(source)).toEqual(true)
     })
 
-    test('#_processNextFile() should return false and rename destination to duplicate folder when exact duplicate file is found', async () => {
+    test('#_processQueueItem() should return false and rename destination to duplicate folder when exact duplicate file is found', async () => {
       const source = path.join(testFolder, 'sourceFile4.txt')
       const destination = path.join(testFolderDest, 'sourceFile4.txt')
 
@@ -141,15 +137,14 @@ describe('FileCopier', () => {
       fse.writeFileSync(source, 'matching data')
       fse.writeFileSync(destination, 'matching data')
 
-      const fileQueue = [fileParams]
-      const success = await fc._processNextFile(fileQueue)
+      const success = await fc._processQueueItem(fileParams)
 
       expect(success).toEqual(false)
       expect(fileParams.destination).toEqual(expectedDupeDestination)
       // Shouldn't have moved
       expect(fse.existsSync(source)).toEqual(true)
-      expect(fileQueue).toHaveLength(1)
-      expect(fileQueue[0]).toMatchObject({
+      // Params object should have been modified
+      expect(fileParams).toMatchObject({
         source,
         destination: expectedDupeDestination,
         moveFile: true,
@@ -158,47 +153,29 @@ describe('FileCopier', () => {
     })
   })
 
-  // // Cleanup
-  // afterAll(() => {
-  //   fse.removeSync(testWatchDirPath)
-  // })
+  describe('Queue processing', () => {
+    test('Queue should run and emit event when complete', (done) => {
+      const destFileList = []
 
-  // test('Should wait until files stop add events', (done) => {
-  //   const watcher = new Watcher()
+      fc.on(FileCopier.EVENT_QUEUE_COMPLETE, () => {
+        expect(fc._fileQueue).toHaveLength(0)
 
-  //   watcher.watch(testWatchDirPath)
+        destFileList.forEach((filePath) => {
+          expect(fse.existsSync(filePath)).toEqual(true)
+        })
 
-  //   const expectedFileList = [
-  //     path.join(testWatchDirPath, 'file_a.txt'),
-  //     path.join(testWatchDirPath, 'file_b.txt')
-  //   ]
+        done()
+      })
 
-  //   const startTime = new Date().getTime()
-  //   const writeDelay = 250
+      for (let i = 0; i < 5; i++) {
+        const source = path.join(testFolder, `queue_source_${i}.txt`)
+        const destination = path.join(testFolderDest, `queue_dest_${i}.txt`)
+        fse.writeFileSync(source, 'some data')
 
-  //   setTimeout(() => {
-  //     fse.writeFileSync(expectedFileList[0], 'a', { encoding: 'utf8' })
-  //   }, writeDelay)
+        destFileList.push(destination)
 
-  //   setTimeout(() => {
-  //     fse.writeFileSync(expectedFileList[1], 'b', { encoding: 'utf8' })
-  //   }, writeDelay * 2)
-
-  //   // Should only happen once
-  //   watcher.on('change', (changedDir) => {
-  //     const delayTime = new Date().getTime() - startTime
-  //     // The debounce should ensure that the change event only happens after files stop changing
-  //     expect(delayTime).toBeGreaterThan(watcher._changeTriggerDelay + writeDelay * 2)
-  //     expect(changedDir).toEqual(testWatchDirPath)
-  //     expect(watcher.fileList).toEqual(
-  //       expect.arrayContaining(expectedFileList)
-  //     )
-
-  //     watcher.stop()
-  //       .then(() => {
-  //         watcher.removeAllListeners('change')
-  //         done()
-  //       })
-  //   })
-  // }, 8000)
+        fc.addToQueue(source, destination, true, false)
+      }
+    }, 3000)
+  })
 })

@@ -1,7 +1,7 @@
 const EventListener = require('events')
 const path = require('path')
 const fse = require('fs-extra')
-const logger = require('./Logger')
+const Logger = require('./Logger')
 const md5File = require('md5-file')
 
 class FileCopier extends EventListener {
@@ -10,6 +10,7 @@ class FileCopier extends EventListener {
 
     this._fileQueue = []
     this._duplicatesDir = ''
+    this._queueActive = false
   }
 
   set duplicatesDir (dirPath) {
@@ -62,85 +63,103 @@ class FileCopier extends EventListener {
       this._fileQueue.push(item)
     }
 
+    if (!this._queueActive) this._continueQueue()
+
     return item
   }
 
   /**
-   *
-   * @param {array} fileQueue
+   * Starts or steps through queue
    */
-  async _processNextFile (fileQueue) {
-    if (fileQueue.length === 0) {
-      logger.info('FileCopier queue empty.')
-      return
+  async _continueQueue () {
+    this._queueActive = true
+
+    if (this._fileQueue.length > 0) {
+      const success = await this._processQueueItem(this._fileQueue[0])
+      if (success) this._fileQueue.shift()
     }
 
-    const fileParams = fileQueue[0]
+    if (this._fileQueue.length === 0) {
+      this._onQueueEmptied()
+    } else {
+      process.nextTick(() => this._continueQueue())
+    }
+  }
+
+  /**
+   * All done
+   */
+  _onQueueEmptied () {
+    this._queueActive = false
+    this.emit(FileCopier.EVENT_QUEUE_COMPLETE)
+  }
+
+  /**
+   * Processes a single queued file item
+   * @param {object} queueItem
+   */
+  async _processQueueItem (queueItem) {
+    Logger.info(`Processing ${queueItem.source} -> ${queueItem.destination}`, 'FileCopier')
+
+    let processSuccess = false
 
     try {
       // Either perform a move or copy
       // Copy would be used to go from an SD card
-      if (fileParams.moveFile) {
-        await fse.move(fileParams.source, fileParams.destination, {
+      if (queueItem.moveFile) {
+        await fse.move(queueItem.source, queueItem.destination, {
           overwrite: false
         })
       } else {
-        await fse.copy(fileParams.source, fileParams.destination, {
+        await fse.copy(queueItem.source, queueItem.destination, {
           overwrite: false,
           errorOnExist: true,
           preserveTimestamps: true
         })
       }
 
-      fileQueue.shift()
-      return true
+      processSuccess = true
     } catch (error) {
       if (error.message.match(/already exists/)) {
         // Verify that the destination is truly a dupe
-        if (fileParams.preserveDuplicate) {
+        if (queueItem.preserveDuplicate) {
           // These are the same hash, move to dupes folder
           // and overwrite any existing dupes
-          if (this._compareFiles(fileParams.source, fileParams.destination)) {
+          if (this._compareFiles(queueItem.source, queueItem.destination)) {
             this.addToQueue(
-              fileParams.source,
+              queueItem.source,
               this._duplicatesDir,
-              fileParams.moveFile,
+              queueItem.moveFile,
               false,
-              fileParams
+              queueItem
             )
           } else {
             // Files were different hashes, but same filename. Increment filename.
-            const newDestination = this._incrementFilename(fileParams.destination)
+            const newDestination = this._incrementFilename(queueItem.destination)
             this.addToQueue(
-              fileParams.source,
+              queueItem.source,
               newDestination,
-              fileParams.moveFile,
-              fileParams.preserveDuplicate,
-              fileParams
+              queueItem.moveFile,
+              queueItem.preserveDuplicate,
+              queueItem
             )
           }
-          return false
+          processSuccess = false
         }
       } else {
-        // For all other reasons it couldn't be moved
-        throw error
+        // Unrecoverable error, throw it and advance the queue
+        // fileQueue.shift()
+        // TODO - proper logger
+        Logger.error('Could not copy file', 'FileCopier', error)
+        processSuccess = true
+        // this.emit(FileCopier.EVENT_QUEUE_ITEM_PROCESSED)
+        // return false
+        // throw error
       }
     }
 
-    // Was successful or couldn't be moved
-
-    // fse.copySync(from, to, {
-    //   overwrite: false
-
-    // })
-
-    // const nextPath = this._fileQueue[0]
-
-    // Get target path
-    // Check for dupe file name
-    // Verify is actually dupe via hash
-    // Rename appropriately
-    // Continue
+    this.emit(FileCopier.EVENT_QUEUE_ITEM_PROCESSED, processSuccess)
+    return processSuccess
   }
 
   _compareFiles (fileA, fileB) {
@@ -168,5 +187,8 @@ class FileCopier extends EventListener {
     return path.format(parts)
   }
 }
+
+FileCopier.EVENT_QUEUE_COMPLETE = 'queue_complete'
+FileCopier.EVENT_QUEUE_ITEM_PROCESSED = 'queue_item_processed'
 
 module.exports = FileCopier

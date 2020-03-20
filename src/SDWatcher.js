@@ -1,6 +1,6 @@
 const drivelist = require('drivelist')
 const Watcher = require('./Watcher')
-const logger = require('./Logger')
+const Logger = require('./Logger')
 
 class SDWatcher extends Watcher {
   constructor () {
@@ -26,8 +26,9 @@ class SDWatcher extends Watcher {
     if (newSDCards.length > 0) {
       // Start watching
       newSDCards.forEach((newCard) => {
-        logger.info('Found new SD card:', newCard)
         const watchPath = newCard.path
+
+        Logger.info(`Found new SD card: ${watchPath}`, 'SDWatcher')
         super.watch(watchPath)
       })
     }

@@ -1,7 +1,7 @@
 const chokidar = require('chokidar')
 const debounce = require('throttle-debounce').debounce
 const EventEmitter = require('events')
-const logger = require('./Logger')
+const Logger = require('./Logger')
 
 class Watcher extends EventEmitter {
   constructor () {
@@ -12,7 +12,7 @@ class Watcher extends EventEmitter {
   }
 
   watch (watchDirPath, depth = 99) {
-    logger.info('Watching path:', watchDirPath)
+    Logger.info(`Watching path ${watchDirPath}`, 'Watcher')
     // One-liner for current directory
     this._chokidarWatcher = chokidar.watch(watchDirPath, {
       awaitWriteFinish: true,

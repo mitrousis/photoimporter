@@ -1,7 +1,6 @@
 const Watcher = require('../src/Watcher')
 const path = require('path')
 const fse = require('fs-extra')
-const hashFiles = require('hash-files')
 
 describe('Watcher', () => {
   let testWatchDirPath
