@@ -168,7 +168,7 @@ class FileCopier extends EventListener {
 
   _incrementFilename (filePath) {
     const parts = path.parse(filePath)
-    // See if the file name before the extension contains _xxxx
+    // See if the file name before the extension contains _xx
     const versionMatch = parts.name.match(/(.*)_([0-9]{2}$)/)
 
     let base = parts.name

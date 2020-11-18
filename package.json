@@ -10,21 +10,21 @@
     "photoimport": "./index.js"
   },
   "dependencies": {
-    "chokidar": "^3.3.0",
+    "chokidar": "^3.4.3",
     "colors": "^1.4.0",
     "configstore": "^5.0.1",
-    "drivelist": "^8.0.9",
-    "exiftool-vendored": "^3.1.1",
+    "drivelist": "^8.0.10",
+    "exiftool-vendored": "^12.2.0",
     "fs-extra": "^8.1.0",
     "md5-file": "^4.0.0",
-    "throttle-debounce": "^2.1.0",
-    "winston": "^3.2.1",
-    "yargs": "^10.0.3"
+    "throttle-debounce": "^2.3.0",
+    "winston": "^3.3.3",
+    "yargs": "^10.1.2"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.22",
+    "@types/jest": "^24.9.1",
     "jest": "^24.9.0",
-    "standard": "^14.0.2"
+    "standard": "^14.3.4"
   },
   "jest": {
     "transform": {},
