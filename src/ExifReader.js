@@ -2,18 +2,30 @@ const exiftool = require('exiftool-vendored').exiftool
 const Logger = require('./Logger')
 
 class EXIFReader {
-  // constructor () {
+  constructor () {
+    this._exifEndTimeout = -1
 
-  // }
+    this._invalidMIMETypes = ['text/plain']
+  }
 
   async getDateFolder (filePath) {
+    clearTimeout(this._exifEndTimeout)
+
+    // Set timeout to end() exif tool if
+    // no other calls are being made
+    this._exifEndTimeout = setTimeout(() => {
+      exiftool.end()
+    }, 1000)
+
     const tags = await exiftool.read(filePath)
 
-    if (tags.Error === 'Unknown file type') {
-      throw Logger.error(`Invalid EXIF: ${filePath}`, 'EXIFReader')
+    if (tags.errors.length > 0) {
+      throw Logger.error(`EXIF read error(s) [${tags.errors.join(', ')}]: ${filePath}`, 'EXIFReader')
     }
 
-    await exiftool.end()
+    if (this._invalidMIMETypes.indexOf(tags.MIMEType) !== -1) {
+      throw Logger.error(`Invalid MIME Type [${tags.MIMEType}]: ${filePath}`, 'EXIFReader')
+    }
 
     return this._getFolderFromDate(
       this._getDateFromTags(tags)
@@ -22,11 +34,10 @@ class EXIFReader {
 
   /**
    *
-   * @param {*} exifTags
+   * @param {Date} date
    * @returns {String} folder formatted as date
    */
-  _getFolderFromDate (exifTags) {
-    const date = this._getDateFromTags(exifTags)
+  _getFolderFromDate (date) {
     const yr = date.getFullYear()
     const mo = date.getMonth() + 1
     const moPad = ('00' + mo.toString()).substring(mo.toString().length)
@@ -49,6 +60,7 @@ class EXIFReader {
     // Found in iPhone video files
     } else if (exifTags.CreationDate !== undefined) {
       dateNode = exifTags.CreationDate
+    // All other files without exif
     } else if (exifTags.FileModifyDate !== undefined) {
       dateNode = exifTags.FileModifyDate
     }

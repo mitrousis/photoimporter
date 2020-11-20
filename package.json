@@ -4,7 +4,7 @@
   "description": "Photo + video folder creation and organization.",
   "preferGlobal": true,
   "scripts": {
-    "test": "jest --runInBand --detectOpenHandles --testPathPattern=\".test.js$\" --testRegex"
+    "test": "jest --runInBand --testPathPattern=\".test.js$\" --testRegex"
   },
   "bin": {
     "photoimport": "./index.js"
