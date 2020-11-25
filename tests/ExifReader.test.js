@@ -6,6 +6,16 @@ describe('ExifReader', () => {
   const fixtures = path.join(__dirname, './_fixtures/')
   const exifReader = new ExifReader()
 
+  test('#_confirmValidTags() expect valid ImageWidth tag in image file', () => {
+    const tags = fse.readJsonSync(path.join(fixtures, '/exif/exif_test_iphone_1.json'))
+    expect(exifReader._confirmValidTags(tags, ['ImageWidth'])).toEqual(true)
+  })
+
+  test('#_confirmValidTags() expect missing ImageWidth tag in non-image file', () => {
+    const tags = fse.readJsonSync(path.join(fixtures, '/exif/exif_test_zip.json'))
+    expect(exifReader._confirmValidTags(tags, ['ImageWidth'])).toEqual(false)
+  })
+
   test.each([
     ['exif_test_iphone_1.json', new Date(2017, 10, 9, 16, 27, 22, 0)],
     ['exif_test_iphone_video.json', new Date(2017, 10, 9, 16, 29, 26, 0)],
@@ -40,10 +50,4 @@ describe('ExifReader', () => {
       return expect(exifReader.getDateFolder(path.join(fixtures, '/media/', fileName))).resolves.toEqual(expectedFolder)
     }
   )
-
-  test('#getDateFolder() should reject text MIME types', () => {
-    return expect(exifReader.getDateFolder(path.join(fixtures, '/media/not_a_photo.txt.zip'))).rejects.toMatchObject(
-      { message: expect.stringContaining('Invalid MIME Type [text/plain]') }
-    )
-  })
 })

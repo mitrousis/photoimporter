@@ -1,0 +1,62 @@
+{
+  "SourceFile": "/Users/nicholas.mitrousis/_Projects/photoimport/tests/_fixtures/media/not_a_photo.txt.zip",
+  "errors": [],
+  "ExifToolVersion": 12.06,
+  "FileName": "not_a_photo.txt.zip",
+  "Directory": "/Users/nicholas.mitrousis/_Projects/photoimport/tests/_fixtures/media",
+  "FileSize": "192 bytes",
+  "FileModifyDate": {
+    "year": 2020,
+    "month": 11,
+    "day": 24,
+    "hour": 21,
+    "minute": 45,
+    "second": 20,
+    "millisecond": 0,
+    "tzoffsetMinutes": -480,
+    "rawValue": "2020:11:24 21:45:20-08:00"
+  },
+  "FileAccessDate": {
+    "year": 2020,
+    "month": 11,
+    "day": 24,
+    "hour": 21,
+    "minute": 45,
+    "second": 20,
+    "millisecond": 0,
+    "tzoffsetMinutes": -480,
+    "rawValue": "2020:11:24 21:45:20-08:00"
+  },
+  "FileInodeChangeDate": {
+    "year": 2020,
+    "month": 11,
+    "day": 24,
+    "hour": 21,
+    "minute": 45,
+    "second": 20,
+    "millisecond": 0,
+    "tzoffsetMinutes": -480,
+    "rawValue": "2020:11:24 21:45:20-08:00"
+  },
+  "FilePermissions": "rw-r--r--",
+  "FileType": "ZIP",
+  "FileTypeExtension": "zip",
+  "MIMEType": "application/zip",
+  "ZipRequiredVersion": 20,
+  "ZipBitFlag": "0x0008",
+  "ZipCompression": "Deflated",
+  "ZipModifyDate": {
+    "year": 2020,
+    "month": 1,
+    "day": 24,
+    "hour": 22,
+    "minute": 21,
+    "second": 58,
+    "millisecond": 0,
+    "rawValue": "2020:01:24 22:21:58"
+  },
+  "ZipCRC": "0xfc4f33ee",
+  "ZipCompressedSize": 20,
+  "ZipUncompressedSize": 18,
+  "ZipFileName": "not_a_photo.txt"
+}

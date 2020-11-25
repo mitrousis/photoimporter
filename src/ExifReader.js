@@ -1,11 +1,11 @@
 const exiftool = require('exiftool-vendored').exiftool
 const Logger = require('./Logger')
+const AppConfig = require('./AppConfig')
 
 class EXIFReader {
   constructor () {
     this._exifEndTimeout = -1
-
-    this._invalidMIMETypes = ['text/plain']
+    this._validExifTags = AppConfig.validExifTags
   }
 
   async getDateFolder (filePath) {
@@ -23,13 +23,26 @@ class EXIFReader {
       throw Logger.error(`EXIF read error(s) [${tags.errors.join(', ')}]: ${filePath}`, 'EXIFReader')
     }
 
-    if (this._invalidMIMETypes.indexOf(tags.MIMEType) !== -1) {
-      throw Logger.error(`Invalid MIME Type [${tags.MIMEType}]: ${filePath}`, 'EXIFReader')
-    }
-
     return this._getFolderFromDate(
       this._getDateFromTags(tags)
     )
+  }
+
+  /**
+   * Determine if a tag object contains any valid tags
+   * @param {*} tags
+   * @param {*} validTags
+   */
+  _confirmValidTags (tags, validTags) {
+    let valid = false
+
+    Object.entries(tags).forEach(([key, value]) => {
+      if (validTags.indexOf(key) > -1) {
+        valid = true
+      }
+    })
+
+    return valid
   }
 
   /**

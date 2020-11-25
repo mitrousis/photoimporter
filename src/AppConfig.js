@@ -3,9 +3,28 @@ const { argv } = require('yargs')
 const Logger = require('./Logger')
 const fse = require('fs-extra')
 
+/**
+ * @class AppConfig
+ * This is a singleton
+ */
 class AppConfig {
   constructor () {
-    this._configStore = new Configstore('photoimporter')
+    // This is currently only used for testing and shouldn't be changed for general use
+    const configPath = process.env.CONFIG_PATH || null
+
+    this._configStore = new Configstore('photoimporter', null, {
+      configPath
+    })
+
+    // A file must have one of these exif tags to be considered
+    // a valid image file and processed. This is due to the exif
+    // tool processing any file without reporting if it's an image/video or not
+    if (!this._configStore.has('validExifTags')) {
+      this._configStore.set('validExifTags',
+        [
+          'ImageWidth'
+        ])
+    }
 
     /** @type {String|Array} */
     let source = argv.source || argv.s || this._configStore.get('source') || []
@@ -59,6 +78,10 @@ class AppConfig {
 
   get shouldWatch () {
     return this._configStore.get('watch')
+  }
+
+  get validExifTags () {
+    return this._configStore.get('validExifTags')
   }
 }
 

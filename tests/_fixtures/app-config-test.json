@@ -1,0 +1,10 @@
+{
+	"source": [
+		"./tests/_fixtures/test-source"
+	],
+	"destination": "./tests/_fixtures/test-destination",
+	"validExifTags": [
+		"ImageWidth"
+	],
+	"watch": false
+}

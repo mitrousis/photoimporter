@@ -4,7 +4,7 @@
   "description": "Photo + video folder creation and organization.",
   "preferGlobal": true,
   "scripts": {
-    "test": "jest --runInBand --testPathPattern=\".test.js$\" --testRegex"
+    "test": "CONFIG_PATH=./tests/_fixtures/app-config-test.json jest --runInBand --testPathPattern=\".test.js$\" --testRegex"
   },
   "bin": {
     "photoimport": "./index.js"
