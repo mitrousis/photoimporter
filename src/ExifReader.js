@@ -23,6 +23,10 @@ class EXIFReader {
       throw Logger.error(`EXIF read error(s) [${tags.errors.join(', ')}]: ${filePath}`, 'EXIFReader')
     }
 
+    if (!this._confirmValidTags(tags, AppConfig.validExifTags)) {
+      throw Logger.error(`File does not have valid media EXIF tags: ${filePath}`, 'EXIFReader')
+    }
+
     return this._getFolderFromDate(
       this._getDateFromTags(tags)
     )
