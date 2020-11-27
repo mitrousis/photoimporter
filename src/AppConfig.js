@@ -59,7 +59,7 @@ class AppConfig {
       process.exit(1)
     }
 
-    Logger.verbose(`Using source directories: ${source.join(', ')}`, 'AppConfig')
+    Logger.verbose(`Using source directory(s): ${source.join(', ')}`, 'AppConfig')
     Logger.verbose(`Using destination directory: ${destination}`, 'AppConfig')
     Logger.verbose(`Watch for changes: ${watch}`, 'AppConfig')
 
@@ -68,6 +68,9 @@ class AppConfig {
     this._configStore.set('watch', watch)
   }
 
+  /**
+   * @returns {Array} Array of source folders
+   */
   get source () {
     return this._configStore.get('source')
   }

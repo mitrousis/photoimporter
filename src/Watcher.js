@@ -40,6 +40,9 @@ class Watcher extends EventEmitter {
     }
   }
 
+  /**
+   * @returns {Promise}
+   */
   stop () {
     // Return a promise even if watcher isn't defined
     let stopPromise = Promise.resolve()
@@ -56,6 +59,8 @@ class Watcher extends EventEmitter {
    * Debounce the "add" events to trigger copying process once
    */
   _onFileListUpdated () {
+    Logger.verbose(`File list updated, ${this._lastFileList.length} new files`, 'Watcher')
+
     this.emit(Watcher.EVENT_FILE_LIST_UPDATED, this._lastFileList)
     this._lastFileList = []
   }

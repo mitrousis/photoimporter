@@ -1,9 +1,8 @@
 const fse = require('fs-extra')
-const path = require('path')
+
+const jestTestVariables = JSON.parse(process.env.jestTestVariables)
 
 // Some global setup before any tests
 module.exports = async () => {
-  const appConfigTestFolder = path.join(__dirname, './_fixtures/appConfigTest/')
-
-  fse.removeSync(appConfigTestFolder)
+  fse.removeSync(jestTestVariables.appConfigTestFolder)
 }

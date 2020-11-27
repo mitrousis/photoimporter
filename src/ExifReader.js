@@ -8,6 +8,11 @@ class EXIFReader {
     this._validExifTags = AppConfig.validExifTags
   }
 
+  /**
+   *
+   * @param {String} filePath
+   * @returns {Promise<String>} Folder name formatted with date
+   */
   async getDateFolder (filePath) {
     clearTimeout(this._exifEndTimeout)
 

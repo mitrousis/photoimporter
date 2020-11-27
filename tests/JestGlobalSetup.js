@@ -10,6 +10,12 @@ module.exports = async () => {
   const sourcePath = path.join(appConfigTestFolder, './test-source')
   const destPath = path.join(appConfigTestFolder, './test-destination')
 
+  process.env.jestTestVariables = JSON.stringify({
+    appConfigTestFolder,
+    sourcePath,
+    destPath
+  })
+
   fse.mkdirpSync(sourcePath)
   fse.mkdirpSync(destPath)
 

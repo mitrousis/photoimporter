@@ -11,6 +11,7 @@ class FileCopier extends EventListener {
     this._fileQueue = []
     this._duplicatesDir = ''
     this._queueActive = false
+    this._queueEmptyTimeout = -1
   }
 
   set duplicatesDir (dirPath) {
@@ -26,7 +27,7 @@ class FileCopier extends EventListener {
    * Formats a file queue item, adding the target path
    * Optionally will update the item in-place instead of appending
    * @param {string} source
-   * @param {string} destination
+   * @param {string} destination file name or folder to copy/move to
    * @param {boolean} moveFile
    * @param {boolean} preserveDuplicate
    * @param {object} updateInPlace
@@ -80,10 +81,26 @@ class FileCopier extends EventListener {
     }
 
     if (this._fileQueue.length === 0) {
-      this._onQueueEmptied()
+      this._waitToEmptyQueue()
     } else {
       process.nextTick(() => this._continueQueue())
     }
+  }
+
+  /**
+   * Wait for 1 second before emptying the queue, which allows
+   * for some delays in adding items to the queue race conditions
+   */
+  _waitToEmptyQueue () {
+    clearTimeout(this._queueEmptyTimeout)
+
+    this._queueEmptyTimeout = setTimeout(() => {
+      if (this._fileQueue.length === 0) {
+        this._onQueueEmptied()
+      } else {
+        this._continueQueue()
+      }
+    }, 1000)
   }
 
   /**
@@ -147,14 +164,8 @@ class FileCopier extends EventListener {
           processSuccess = false
         }
       } else {
-        // Unrecoverable error, throw it and advance the queue
-        // fileQueue.shift()
-        // TODO - proper logger
         Logger.error('Could not copy file', 'FileCopier', error)
         processSuccess = true
-        // this.emit(FileCopier.EVENT_QUEUE_ITEM_PROCESSED)
-        // return false
-        // throw error
       }
     }
 
