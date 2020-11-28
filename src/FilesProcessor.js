@@ -54,6 +54,11 @@ class FilesProcessor extends EventListener {
     }
   }
 
+  async stop () {
+    await this._watcher.stop()
+    await this._sdWatcher.stop()
+  }
+
   /**
    * @param {Array} fileList
    * @param {Boolean} shouldMoveFile move instead of copy

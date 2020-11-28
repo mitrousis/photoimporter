@@ -6,11 +6,13 @@ const Logger = require('./Logger')
 class Watcher extends EventEmitter {
   constructor () {
     super()
-    this._changeTriggerDelay = 2000
-    // this._changePollingInterval = 10000
+
+    // This should be 3000 or more, since chokidar will
+    // use 2000 to ensure that file is done being written
+    this._changeTriggerDelay = 3000
     this._lastFileList = []
 
-    this._onFileListUpdatedDebounced = debounce(this._changeTriggerDelay, this._onFileListUpdated)
+    this._onFileListUpdatedDebounced = debounce(this._changeTriggerDelay, false, this._onFileListUpdated)
   }
 
   /**
@@ -34,21 +36,23 @@ class Watcher extends EventEmitter {
         this._lastFileList.push(path)
         this._onFileListUpdatedDebounced()
       })
+
+      // This ensures that even if a folder is empty when it is
+      // added, we trigger the updated event
+      this._chokidarWatcher.on('ready', () => {
+        this._onFileListUpdatedDebounced()
+      })
     }
   }
 
   /**
    * @returns {Promise}
    */
-  stop () {
+  async stop () {
     // Return a promise even if watcher isn't defined
-    let stopPromise = Promise.resolve()
-
     if (this._chokidarWatcher) {
-      stopPromise = this._chokidarWatcher.close()
+      await this._chokidarWatcher.close()
     }
-
-    return stopPromise
   }
 
   /**

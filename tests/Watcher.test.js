@@ -26,7 +26,7 @@ describe('Watcher', () => {
     ]
 
     const startTime = new Date().getTime()
-    const writeDelay = 250
+    const writeDelay = 500
 
     setTimeout(() => {
       fse.writeFileSync(expectedFileList[0], 'a', { encoding: 'utf8' })
@@ -52,4 +52,25 @@ describe('Watcher', () => {
         })
     })
   }, 8000)
+
+  test('Watching empty folder should not hang process', (done) => {
+    expect.assertions(1)
+
+    const watcher = new Watcher()
+
+    const emptyWatchDir = path.join(__dirname, './_fixtures/', 'test-watch-folder', './empty')
+    fse.mkdirpSync(emptyWatchDir)
+
+    watcher.on(Watcher.EVENT_FILE_LIST_UPDATED, (updatedFileList) => {
+      expect(updatedFileList).toHaveLength(0)
+
+      watcher.stop()
+        .then(() => {
+          watcher.removeAllListeners(Watcher.EVENT_FILE_LIST_UPDATED)
+          done()
+        })
+    })
+
+    watcher.watch(emptyWatchDir)
+  })
 })
