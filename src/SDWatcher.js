@@ -6,12 +6,18 @@ class SDWatcher extends Watcher {
   constructor () {
     super()
 
+    this._validDriveLabels = []
     this._sdCardPollingInterval = 2000
     this._sdCardPollingTimeoutRef = null
     this._knownSDCards = []
   }
 
-  watch () {
+  /**
+   *
+   * @param {Array} driveLabels array of valid drive labels that will trigger a copy
+   */
+  watch (driveLabels) {
+    this._validDriveLabels = driveLabels
     this._nextDrivePoll()
   }
 
@@ -26,10 +32,9 @@ class SDWatcher extends Watcher {
     if (newSDCards.length > 0) {
       // Start watching
       newSDCards.forEach((newCard) => {
-        const watchPath = newCard.path
-
-        Logger.info(`Found new SD card: ${watchPath}`, 'SDWatcher')
-        super.watch(watchPath)
+        Logger.info(`New removable drive found: "${newCard.label}"`, 'SDWatcher')
+        // Path will be watched by chokidir
+        super.watch(newCard.path)
       })
     }
 
@@ -68,17 +73,22 @@ class SDWatcher extends Watcher {
     const mountedSDCards = []
 
     for (const drive of driveList) {
-      // Only checking for isCard - would need to adjust
-      // this logic if other drive types are to be included
-      if (drive.isCard) {
-        const props = {
-          device: drive.device,
-          // Assume 1 mountpoint
-          path: drive.mountpoints[0].path,
-          name: drive.mountpoints[0].label
-        }
+      // Looking at drive labels for removable drives
+      // instead of targeting SD cards specifically
+      if (drive.isRemovable) {
+        const label = drive.mountpoints[0].label
 
-        mountedSDCards.push(props)
+        // Only include valid drive labels
+        if (this._validDriveLabels.indexOf(label) > -1) {
+          const props = {
+            device: drive.device,
+            // Assume 1 mountpoint
+            path: drive.mountpoints[0].path,
+            label
+          }
+
+          mountedSDCards.push(props)
+        }
       }
     }
 

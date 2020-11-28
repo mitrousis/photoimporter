@@ -3,8 +3,11 @@ const driveListNoSD = require('./_fixtures/drivelist-no-sd.json')
 const driveListWithSD = require('./_fixtures/drivelist-with-sd.json')
 
 describe('SDWatcher', () => {
+  const validDriveLabels = ['NO NAME']
+
   test('#_getMountedSDCards() should not find SD drives', () => {
     const sdWatcher = new SDWatcher()
+    sdWatcher._validDriveLabels = validDriveLabels
 
     expect(sdWatcher._getMountedSDCards(driveListNoSD)).toBeInstanceOf(Array)
     expect(sdWatcher._getMountedSDCards(driveListNoSD).length).toEqual(0)
@@ -12,13 +15,14 @@ describe('SDWatcher', () => {
 
   test('#_getMountedSDCards() should find SD drives', () => {
     const sdWatcher = new SDWatcher()
+    sdWatcher._validDriveLabels = validDriveLabels
 
     expect(sdWatcher._getMountedSDCards(driveListWithSD)).toEqual(
       expect.arrayContaining([
         {
           device: '/dev/disk2',
           path: '/Volumes/NO NAME',
-          name: 'NO NAME'
+          label: 'NO NAME'
         }
       ])
     )
@@ -27,10 +31,11 @@ describe('SDWatcher', () => {
   /// This isn't working
   test('#_nextDrivePoll() should update known drive list when drive is found', (done) => {
     const sdWatcher = new SDWatcher()
+
     const expectedDrive1 = {
       device: '/dev/disk2',
       path: '/Volumes/NEW DRIVE',
-      name: 'NEW DRIVE'
+      label: 'NEW DRIVE'
     }
 
     // Mock function
@@ -63,13 +68,13 @@ describe('SDWatcher', () => {
       expectedDrive1 = {
         device: '/dev/disk2',
         path: '/Volumes/NEW DRIVE',
-        name: 'NEW DRIVE'
+        label: 'NEW DRIVE'
       }
 
       expectedDrive2 = {
         device: '/dev/disk3',
         path: '/Volumes/NEW DRIVE 2',
-        name: 'NEW DRIVE 2'
+        label: 'NEW DRIVE 2'
       }
     })
 
