@@ -28,9 +28,6 @@ class Watcher extends EventEmitter {
       this._chokidarWatcher = chokidar.watch(watchDirPath, {
         awaitWriteFinish: true,
         depth
-      // usePolling: true,
-      // interval: this._changePollingInterval,
-      // binaryInterval: this._changePollingInterval
       })
 
       this._chokidarWatcher.on('add', (path) => {

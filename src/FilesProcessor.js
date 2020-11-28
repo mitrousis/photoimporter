@@ -8,13 +8,13 @@ const Logger = require('./Logger')
 
 class FilesProcessor extends EventListener {
   /**
-   * @param {Array} sources Paths to process
+   * @param {Array<String>} sources Paths to process
    * @param {String} destination Target directory for copy operation
    * @param {String} duplicatesDir Path to copy any duplicates
-   * @param {Boolean} includeSDCards Include any attached SD cards in processing
+   * @param {Array<String>} removableDiskLabels Removable disk labels to include (when attached)
    * @param {Boolean} watch Keep watching for changed files in either sources or SD cards
    */
-  constructor (sources, destination, duplicatesDir, includeSDCards = false, watch = false) {
+  constructor (sources, destination, duplicatesDir, removableDiskLabels = null, watch = false) {
     super()
 
     this._destination = destination
@@ -41,17 +41,17 @@ class FilesProcessor extends EventListener {
     this._watcher.watch(sources)
 
     // Create a watcher for SD cards outside of sources
-    // if (includeSDCards) {
-    //   this._sdWatcher = new SDWatcher()
-    //   this._sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
-    //     await this._processFileList(fileList, false)
+    if (removableDiskLabels) {
+      this._sdWatcher = new SDWatcher()
+      this._sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
+        await this._processFileList(fileList, false)
 
-    //     if (!watch) {
-    //       this._sdWatcher.stop()
-    //     }
-    //   })
-    //   this._sdWatcher.watch(sources)
-    // }
+        if (!watch) {
+          await this._sdWatcher.stop()
+        }
+      })
+      this._sdWatcher.watch(removableDiskLabels)
+    }
   }
 
   /**

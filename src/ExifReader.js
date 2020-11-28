@@ -25,11 +25,13 @@ class EXIFReader {
     const tags = await exiftool.read(filePath)
 
     if (tags.errors.length > 0) {
-      throw Logger.error(`EXIF read error(s) [${tags.errors.join(', ')}]: ${filePath}`, 'EXIFReader')
+      Logger.warn(`EXIF read error(s) [${tags.errors.join(', ')}]: ${filePath}`, 'EXIFReader')
+      throw new Error()
     }
 
     if (!this._confirmValidTags(tags, AppConfig.validExifTags)) {
-      throw Logger.error(`File does not have valid media EXIF tags: ${filePath}`, 'EXIFReader')
+      Logger.warn(`File does not have valid media EXIF tags: ${filePath}`, 'EXIFReader')
+      throw new Error()
     }
 
     return this._getFolderFromDate(

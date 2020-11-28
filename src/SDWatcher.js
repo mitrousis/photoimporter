@@ -1,7 +1,10 @@
 const drivelist = require('drivelist')
 const Watcher = require('./Watcher')
 const Logger = require('./Logger')
-
+/**
+ * Watches for specified removable disks, then adds their
+ * mountpoint to watcher to be watched for changes
+ */
 class SDWatcher extends Watcher {
   constructor () {
     super()
@@ -14,7 +17,7 @@ class SDWatcher extends Watcher {
 
   /**
    *
-   * @param {Array} driveLabels array of valid drive labels that will trigger a copy
+   * @param {Array<String>} driveLabels array of valid drive labels that will trigger a copy
    */
   watch (driveLabels) {
     this._validDriveLabels = driveLabels
