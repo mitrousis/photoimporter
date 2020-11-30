@@ -10,7 +10,7 @@ describe('FilesProcessor', () => {
   const mediaFixtures = path.join(__dirname, './_fixtures/media')
   const duplicatesDir = path.join(jestTestVariables.sourcePath, './duplicates-test')
 
-  test.skip('Should move images into their expected destination folder when run once', (done) => {
+  test('Should move images into their expected destination folder when run once', (done) => {
     // Setup some test files
     for (var i = 0; i < 10; i++) {
       fse.copyFileSync(
@@ -63,7 +63,7 @@ describe('FilesProcessor', () => {
         setTimeout(() => {
           _attachTestImage()
         }, 3000)
-      }, 10000)
+      }, 12000)
     })
   }
 })
