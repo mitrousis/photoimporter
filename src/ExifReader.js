@@ -1,6 +1,19 @@
 const exiftool = require('exiftool-vendored').exiftool
 const Logger = require('./Logger')
 const AppConfig = require('./AppConfig')
+const nodeCleanup = require('node-cleanup')
+
+// nodeCleanup(function (exitCode, signal) {
+//   nodeCleanup.uninstall()
+
+//   // release resources here before node exits
+//   exiftool.end()
+//     .then(() => {
+//       process.kill(process.pid, signal)
+//     })
+
+//   return false
+// })
 
 class EXIFReader {
   constructor () {
@@ -14,15 +27,21 @@ class EXIFReader {
    * @returns {Promise<String>} Folder name formatted with date
    */
   async getDateFolder (filePath) {
-    clearTimeout(this._exifEndTimeout)
+    // clearTimeout(this._exifEndTimeout)
 
-    // Set timeout to end() exif tool if
-    // no other calls are being made
-    this._exifEndTimeout = setTimeout(() => {
-      exiftool.end()
-    }, 1000)
+    // // Set timeout to end() exif tool if
+    // // no other calls are being made
+    // this._exifEndTimeout = setTimeout(() => {
+    //   exiftool.end()
+    // }, 2000)
 
-    const tags = await exiftool.read(filePath)
+    let tags
+
+    try {
+      tags = await exiftool.read(filePath)
+    } catch (e) {
+      throw Logger.error(e, 'EXIFReader')
+    }
 
     if (tags.errors.length > 0) {
       Logger.warn(`EXIF read error(s) [${tags.errors.join(', ')}]: ${filePath}`, 'EXIFReader')
@@ -37,6 +56,11 @@ class EXIFReader {
     return this._getFolderFromDate(
       this._getDateFromTags(tags)
     )
+  }
+
+  async close () {
+    Logger.info(`exiftool.ended ${exiftool.ended}`)
+    return await exiftool.end()
   }
 
   /**

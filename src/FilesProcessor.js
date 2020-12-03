@@ -21,7 +21,13 @@ class FilesProcessor extends EventListener {
 
     this._fileCopier = new FileCopier()
     this._fileCopier.duplicatesDir = duplicatesDir
-    this._fileCopier.on(FileCopier.EVENT_QUEUE_COMPLETE, () => this.emit(FilesProcessor.EVENT_COMPLETE))
+    this._fileCopier.on(FileCopier.EVENT_QUEUE_COMPLETE, async () => {
+      this.emit(FilesProcessor.EVENT_COMPLETE)
+
+      if (!watch) {
+        await this.stop()
+      }
+    })
 
     this._exifReader = new ExifReader()
 
@@ -32,23 +38,23 @@ class FilesProcessor extends EventListener {
       // Watcher will emit an event when first initialized that
       // includes all the files in the dir. Thus, we can stop the
       // watcher immediately after to run just once
-      if (!watch) {
-        await this._watcher.stop()
-      }
+      // if (!watch) {
+      //   await this.stop()
+      // }
     })
 
     // Watcher accepts array or string for source
     this._watcher.watch(sources)
 
     // Create a watcher for SD cards outside of sources
-    if (removableDiskLabels) {
+    if (removableDiskLabels && removableDiskLabels.length) {
       this._sdWatcher = new SDWatcher()
       this._sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
         await this._processFileList(fileList, false)
 
-        if (!watch) {
-          await this._sdWatcher.stop()
-        }
+        // if (!watch) {
+        //   await this.stop()
+        // }
       })
       this._sdWatcher.watch(removableDiskLabels)
     }
@@ -56,7 +62,8 @@ class FilesProcessor extends EventListener {
 
   async stop () {
     await this._watcher.stop()
-    await this._sdWatcher.stop()
+    if (this._sdWatcher) await this._sdWatcher.stop()
+    await this._exifReader.close()
   }
 
   /**
@@ -74,7 +81,7 @@ class FilesProcessor extends EventListener {
         this._fileCopier.addToQueue(sourceFile, targetDir, shouldMoveFile, preserveDuplicates)
       } catch (e) {
         // Currently error messages are logged in their respective functions
-        // and this should just skip files that error
+        // and this should just skip files that error and not stop processing
       }
     }))
   }

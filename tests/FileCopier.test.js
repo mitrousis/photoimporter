@@ -35,7 +35,7 @@ describe('FileCopier', () => {
       .toEqual('a/b/c/test_00.png')
   })
 
-  test('addToQueue() creates a queue item ', () => {
+  test('#addToQueue() creates a queue item ', () => {
     fc._fileQueue = []
 
     const queueItem = fc.addToQueue('/source/file.txt', '/dest/file.txt', true, false)
@@ -49,7 +49,7 @@ describe('FileCopier', () => {
     })
   })
 
-  test('addToQueue() appends target file to destination', () => {
+  test('#addToQueue() appends target file to destination', () => {
     fc._fileQueue = []
 
     const queueItem = fc.addToQueue('/source/file.txt', '/dest/', true, true)
@@ -177,5 +177,37 @@ describe('FileCopier', () => {
         fc.addToQueue(source, destination, true, false)
       }
     }, 3000)
+
+    test('Adding items to a queue over time should make it continue processing', (done) => {
+      const destFileList = []
+      const addTimeoutOffset = 750
+      let numFiles = 0
+      const startTime = new Date()
+
+      fc.on(FileCopier.EVENT_QUEUE_COMPLETE, () => {
+        expect(fc._fileQueue).toHaveLength(0)
+
+        destFileList.forEach((filePath) => {
+          expect(fse.existsSync(filePath)).toEqual(true)
+        })
+
+        const endTime = new Date()
+        expect(endTime - startTime).toBeGreaterThan(addTimeoutOffset * (numFiles - 1) + 1000)
+
+        done()
+      })
+
+      for (numFiles = 0; numFiles < 5; numFiles++) {
+        const source = path.join(testFolder, `queue_source_${numFiles}.txt`)
+        const destination = path.join(testFolderDest, `queue_dest_${numFiles}.txt`)
+        fse.writeFileSync(source, 'some data')
+
+        destFileList.push(destination)
+
+        setTimeout(() => {
+          fc.addToQueue(source, destination, true, false)
+        }, addTimeoutOffset * numFiles)
+      }
+    }, 8000)
   })
 })

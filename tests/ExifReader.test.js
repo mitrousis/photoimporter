@@ -1,6 +1,7 @@
 const ExifReader = require('../src/ExifReader')
 const path = require('path')
 const fse = require('fs-extra')
+const exiftool = require('exiftool-vendored').exiftool
 
 describe('ExifReader', () => {
   const fixtures = path.join(__dirname, './_fixtures/')
@@ -50,4 +51,20 @@ describe('ExifReader', () => {
       return expect(exifReader.getDateFolder(path.join(fixtures, '/media/', fileName))).resolves.toEqual(expectedFolder)
     }
   )
+
+  test('#getDateFolder() over time should not timeout', (done) => {
+    const checkPath = path.join(fixtures, '/media/', 'old_video.avi')
+    const expected = '2005-05'
+
+    expect(exifReader.getDateFolder(checkPath)).resolves.toEqual(expected)
+
+    // Should still work after 3 seconds, assuming ExifReader reopened processes
+    setTimeout(() => {
+      expect(exiftool.ended).toEqual(false)
+      expect(exifReader.getDateFolder(checkPath)).resolves.toEqual(expected)
+        .then(() => {
+          done()
+        })
+    }, 3000)
+  }, 4000)
 })
