@@ -52,19 +52,28 @@ describe('ExifReader', () => {
     }
   )
 
-  test('#getDateFolder() over time should not timeout', (done) => {
+  test('#getDateFolder() should still work after closing', () => {
     const checkPath = path.join(fixtures, '/media/', 'old_video.avi')
     const expected = '2005-05'
 
-    expect(exifReader.getDateFolder(checkPath)).resolves.toEqual(expected)
+    return expect(exifReader.getDateFolder(checkPath)).resolves.toEqual(expected)
+      .then(() => {
+        return exifReader.close()
+      })
+      .then(() => {
+        return expect(exifReader.getDateFolder(checkPath)).resolves.toEqual(expected)
+      })
+      .then(() => {
+        return exifReader.close()
+      })
 
     // Should still work after 3 seconds, assuming ExifReader reopened processes
-    setTimeout(() => {
-      expect(exiftool.ended).toEqual(false)
-      expect(exifReader.getDateFolder(checkPath)).resolves.toEqual(expected)
-        .then(() => {
-          done()
-        })
-    }, 3000)
+    // setTimeout(() => {
+    //   expect(exiftool.ended).toEqual(false)
+    //   expect(exifReader.getDateFolder(checkPath)).resolves.toEqual(expected)
+    //     .then(() => {
+    //       done()
+    //     })
+    // }, 3000)
   }, 4000)
 })

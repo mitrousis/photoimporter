@@ -34,13 +34,6 @@ class FilesProcessor extends EventListener {
     this._watcher = new Watcher()
     this._watcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
       await this._processFileList(fileList, true)
-
-      // Watcher will emit an event when first initialized that
-      // includes all the files in the dir. Thus, we can stop the
-      // watcher immediately after to run just once
-      // if (!watch) {
-      //   await this.stop()
-      // }
     })
 
     // Watcher accepts array or string for source
@@ -51,10 +44,6 @@ class FilesProcessor extends EventListener {
       this._sdWatcher = new SDWatcher()
       this._sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
         await this._processFileList(fileList, false)
-
-        // if (!watch) {
-        //   await this.stop()
-        // }
       })
       this._sdWatcher.watch(removableDiskLabels)
     }
