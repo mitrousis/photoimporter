@@ -70,6 +70,10 @@ class EXIFReader {
    * @returns {String} folder formatted as date
    */
   _getFolderFromDate (date) {
+    if (date === null) {
+      return 'Unknown'
+    }
+
     const yr = date.getFullYear()
     const mo = date.getMonth() + 1
     const moPad = ('00' + mo.toString()).substring(mo.toString().length)
@@ -80,7 +84,7 @@ class EXIFReader {
   /**
    * All the logic for getting the right date from the tags
    * @param {Object} exifTags
-   * @returns {Date}
+   * @returns {Date|null} null if no date is found
    */
   _getDateFromTags (exifTags) {
     let dateNode
@@ -92,9 +96,8 @@ class EXIFReader {
     // Found in iPhone video files
     } else if (exifTags.CreationDate !== undefined) {
       dateNode = exifTags.CreationDate
-    // All other files without exif
-    } else if (exifTags.FileModifyDate !== undefined) {
-      dateNode = exifTags.FileModifyDate
+    } else {
+      return null
     }
 
     return new Date(dateNode.year, dateNode.month - 1, dateNode.day, dateNode.hour, dateNode.minute, dateNode.second)
