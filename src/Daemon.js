@@ -1,82 +1,67 @@
-// const { spawn } = require('child_process')
+const Daemonize2 = require('daemonize2')
+const Logger = require('./Logger')
 
-// const ls = spawn('ls', ['-lh', '/usr'])
+class Daemon {
+  constructor () {
+    this._daemon = Daemonize2.setup({
+      main: 'Daemon.js',
+      name: 'PhotoImport',
+      pidfile: './PhotoImportDaemon.pid',
+      argv: ['child'],
+      cwd: __dirname,
+      silent: true
+    })
 
-// var ps = require('ps-node')
+    this._daemon
+      .on('starting', function () {
+        Logger.log('Starting daemon...')
+      })
+      .on('started', function (pid) {
+        Logger.log('Daemon started. PID: ' + pid)
+      })
+      .on('stopping', function () {
+        Logger.log('Stopping daemon...')
+      })
+      .on('stopped', function (pid) {
+        Logger.log('Daemon stopped.')
+      })
+      .on('running', function (pid) {
+        Logger.log('Daemon already running. PID: ' + pid)
+      })
+      .on('notrunning', function () {
+        Logger.log('Daemon is not running')
+      })
+      .on('error', function (err) {
+        Logger.log('Daemon failed to start:  ' + err.message)
+      })
 
-// // A simple pid lookup
-// ps.lookup({
-//   command: 'node',
-//   arguments: '--debug'
-// }, function (err, resultList) {
-//   if (err) {
-//     throw new Error(err)
-//     }
+    switch (process.argv[2]) {
+      case 'start':
+        // Not running
+        if (this._daemon.status() !== 0) {
+          Logger.log('Already running')
+        } else {
+          this._daemon.start()
+        }
 
-//   resultList.forEach(function (process) {
-//     if (process) {
-//       console.log('PID: %s, COMMAND: %s, ARGUMENTS: %s', process.pid, process.command, process.arguments)
-//         }
-//   })
-// })
+        break
 
-const fse = require('fs-extra')
+      case 'stop':
+        this._daemon.stop()
+        break
 
-var daemon = require('daemonize2').setup({
-  main: 'Daemon.js',
-  name: 'PhotoImport',
-  pidfile: './PhotoImport.pid',
-  argv: ['child'],
-  cwd: __dirname,
-  silent: true
-})
+      case 'child':
+        fse.appendFileSync('output.txt', process.argv + '\r')
 
-daemon
-  .on('starting', function () {
-    console.log('Starting daemon...')
-  })
-  .on('started', function (pid) {
-    console.log('Daemon started. PID: ' + pid)
-  })
-  .on('stopping', function () {
-    console.log('Stopping daemon...')
-  })
-  .on('stopped', function (pid) {
-    console.log('Daemon stopped.')
-  })
-  .on('running', function (pid) {
-    console.log('Daemon already running. PID: ' + pid)
-  })
-  .on('notrunning', function () {
-    console.log('Daemon is not running')
-  })
-  .on('error', function (err) {
-    console.log('Daemon failed to start:  ' + err.message)
-  })
+        setInterval(() => {
+          fse.appendFileSync('output.txt', 'hello\r')
+        }, 2000)
+        break
 
-switch (process.argv[2]) {
-  case 'start':
-    // Not running
-    if (daemon.status() !== 0) {
-      console.log('Already running')
-    } else {
-      daemon.start()
+      default:
+        Logger.log('Usage: [start|stop]')
     }
-
-    break
-
-  case 'stop':
-    daemon.stop()
-    break
-
-  case 'child':
-    fse.appendFileSync('output.txt', process.argv + '\r')
-
-    setInterval(() => {
-      fse.appendFileSync('output.txt', 'hello\r')
-    }, 2000)
-    break
-
-  default:
-    console.log('Usage: [start|stop]')
+  }
 }
+
+module.exports = Daemon

@@ -1,7 +1,6 @@
 const ExifTool = require('exiftool-vendored').ExifTool
 const Logger = require('./Logger')
 const AppConfig = require('./AppConfig')
-const nodeCleanup = require('node-cleanup')
 
 class EXIFReader {
   constructor () {
