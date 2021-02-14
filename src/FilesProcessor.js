@@ -10,17 +10,15 @@ class FilesProcessor extends EventListener {
   /**
    * @param {Array<String>} sources Paths to process
    * @param {String} destination Target directory for copy operation
-   * @param {String} duplicatesDir Path to copy any duplicates
    * @param {Array<String>} removableDiskLabels Removable disk labels to include (when attached)
    * @param {Boolean} watch Keep watching for changed files in either sources or SD cards
    */
-  constructor (sources, destination, duplicatesDir, removableDiskLabels = null, watch = false) {
+  constructor (sources, destination, removableDiskLabels = null, watch = false) {
     super()
 
     this._destination = destination
 
     this._fileCopier = new FileCopier()
-    this._fileCopier.duplicatesDir = duplicatesDir
     this._fileCopier.on(FileCopier.EVENT_QUEUE_COMPLETE, async () => {
       this.emit(FilesProcessor.EVENT_COMPLETE)
 
@@ -37,7 +35,8 @@ class FilesProcessor extends EventListener {
     })
 
     // Watcher accepts array or string for source
-    this._watcher.watch(sources)
+    // Also ignore "duplicates" folder name
+    this._watcher.watch(sources, this._fileCopier.duplicatesDirName)
 
     // Create a watcher for SD cards outside of sources
     if (removableDiskLabels && removableDiskLabels.length) {
@@ -45,7 +44,7 @@ class FilesProcessor extends EventListener {
       this._sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
         await this._processFileList(fileList, false)
       })
-      this._sdWatcher.watch(removableDiskLabels)
+      this._sdWatcher.watch(removableDiskLabels, this._fileCopier.duplicatesDirName)
     }
   }
 

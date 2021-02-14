@@ -3,7 +3,7 @@ const path = require('path')
 
 // Some global setup before any tests
 module.exports = async () => {
-  const appConfigTestFolder = path.join(__dirname, './_fixtures/integrationTests/')
+  const appConfigTestFolder = path.join(__dirname, './_fixtures/integration-tests-temp/')
 
   const appConfigPath = process.env.CONFIG_PATH = path.join(appConfigTestFolder, './app-config.json')
 

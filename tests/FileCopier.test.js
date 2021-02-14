@@ -127,12 +127,12 @@ describe('FileCopier integration tests', () => {
       expect(fse.existsSync(source)).toEqual(true)
     })
 
-    test('#_processQueueItem() should return false and rename destination to duplicate folder when exact duplicate file is found', async () => {
+    test.only('#_processQueueItem() should return false and rename destination to duplicate folder when exact duplicate file is found', async () => {
       const source = path.join(testFolderSource, 'sourceFile4.txt')
       const destination = path.join(testFolderDest, 'sourceFile4.txt')
 
-      fc.duplicatesDir = path.join(testFolderSource, '/duplicates/')
-      const expectedDupeDestination = path.join(fc.duplicatesDir, 'sourceFile4.txt')
+      // Expect dupes to be placed in the subfolder of the source
+      const expectedDupeDestination = path.join(testFolderSource, fc.duplicatesDirName, 'sourceFile4.txt')
 
       const fileParams = {
         source,

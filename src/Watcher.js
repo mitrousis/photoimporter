@@ -19,15 +19,17 @@ class Watcher extends EventEmitter {
    * Listens for changes via chokidar
    * then will update the file list once changes stop
    * @param {string|array} watchDirPath
+   * @param {string} ignored ignore pattern
    * @param {number} depth
    */
-  watch (watchDirPath, depth = 99) {
+  watch (watchDirPath, ignored = '', depth = 99) {
     Logger.info(`Watching path ${watchDirPath}`, 'Watcher')
     // If the chokidar instance exists, call 'add'
     if (this._chokidarWatcher) {
       this._chokidarWatcher.add(watchDirPath)
     } else {
       this._chokidarWatcher = chokidar.watch(watchDirPath, {
+        ignored,
         awaitWriteFinish: true,
         depth
       })

@@ -4,23 +4,27 @@ const fse = require('fs-extra')
 const Logger = require('./Logger')
 const md5File = require('md5-file')
 
+// TODO - duplicates dir needs to be relative to the source, since there can be multiple source folders
+
 class FileCopier extends EventListener {
   constructor () {
     super()
 
     this._fileQueue = []
-    this._duplicatesDir = ''
+    this._duplicatesDirName = '_duplicates'
     this._queueActive = false
     this._queueEmptyTimeout = -1
   }
 
-  set duplicatesDir (dirPath) {
-    fse.mkdirpSync(dirPath)
-    this._duplicatesDir = dirPath
+  /**
+   * This is not a full path, just the name of the directory
+   */
+  set duplicatesDirName (dirName) {
+    this._duplicatesDirName = dirName
   }
 
-  get duplicatesDir () {
-    return this._duplicatesDir
+  get duplicatesDirName () {
+    return this._duplicatesDirName
   }
 
   /**
@@ -143,9 +147,13 @@ class FileCopier extends EventListener {
           // These are the same hash, move to dupes folder
           // and overwrite any existing dupes
           if (this._compareFiles(queueItem.source, queueItem.destination)) {
+            // create dupes dir
+            const dupesFullDirPath = path.join(path.dirname(queueItem.source), this._duplicatesDirName)
+            fse.mkdirpSync(dupesFullDirPath)
+
             this.addToQueue(
               queueItem.source,
-              this._duplicatesDir,
+              dupesFullDirPath,
               queueItem.moveFile,
               false,
               queueItem

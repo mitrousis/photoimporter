@@ -4,9 +4,9 @@
   "description": "Photo + video folder creation and organization.",
   "preferGlobal": true,
   "scripts": {
-    "test:unit": "jest --runInBand --detectOpenHandles --testNamePattern='^((?!integration).)*$' --testRegex",
-    "test:integration": "jest --runInBand --detectOpenHandles --testNamePattern='integration' --testRegex",
-    "test": "jest --runInBand --detectOpenHandles --testRegex"
+    "test:unit": "jest --runInBand --detectOpenHandles --testPathPattern='test.js$' --testNamePattern='^((?!integration).)*$' --testRegex",
+    "test:integration": "jest --runInBand --detectOpenHandles --testPathPattern='test.js$' --testNamePattern='integration' --testRegex",
+    "test": "jest --runInBand --detectOpenHandles --testPathPattern='test.js$' --testRegex"
   },
   "bin": {
     "photoimport": "./index.js"
