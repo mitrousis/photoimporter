@@ -2,23 +2,10 @@ const FileCopier = require('../src/FileCopier')
 const path = require('path')
 const fse = require('fs-extra')
 
-describe('FileCopier', () => {
-  /** @type {FileCopier} */
-  let fc
-  const testFolder = path.join(__dirname, './_fixtures/', 'delete_me_filecopier/')
-  const testFolderDest = path.join(__dirname, './_fixtures/', 'delete_me_filecopier/dest/')
-
-  beforeAll(() => {
-    fc = new FileCopier()
-    fse.mkdirpSync(testFolder)
-    fse.mkdirpSync(testFolderDest)
-  })
-
-  afterAll(() => {
-    fse.removeSync(testFolder)
-  })
-
+describe('FileCopier unit tests', () => {
   test('#_incrementFilename() formats as expected', () => {
+    const fc = new FileCopier()
+
     expect(fc._incrementFilename('a/b/c/test.jpeg'))
       .toEqual('a/b/c/test_00.jpeg')
 
@@ -36,7 +23,7 @@ describe('FileCopier', () => {
   })
 
   test('#addToQueue() creates a queue item ', () => {
-    fc._fileQueue = []
+    const fc = new FileCopier()
 
     const queueItem = fc.addToQueue('/source/file.txt', '/dest/file.txt', true, false)
 
@@ -50,7 +37,7 @@ describe('FileCopier', () => {
   })
 
   test('#addToQueue() appends target file to destination', () => {
-    fc._fileQueue = []
+    const fc = new FileCopier()
 
     const queueItem = fc.addToQueue('/source/file.txt', '/dest/', true, true)
 
@@ -62,10 +49,30 @@ describe('FileCopier', () => {
       preserveDuplicate: true
     })
   })
+})
+
+describe('FileCopier integration tests', () => {
+  /** @type {FileCopier} */
+  let fc
+  const testFolderSource = path.join(__dirname, './_fixtures/', 'delete_me_filecopier/source/')
+  const testFolderDest = path.join(__dirname, './_fixtures/', 'delete_me_filecopier/dest/')
+
+  beforeAll(() => {
+    fse.mkdirpSync(testFolderSource)
+    fse.mkdirpSync(testFolderDest)
+  })
+
+  beforeEach(() => {
+    fc = new FileCopier()
+  })
+
+  afterAll(() => {
+    fse.removeSync(path.join(__dirname, './_fixtures/', 'delete_me_filecopier/'))
+  })
 
   describe('#_processQueueItem()', () => {
     test('#_processQueueItem() should copy a file successfully', async () => {
-      const source = path.join(testFolder, 'sourceFile1.txt')
+      const source = path.join(testFolderSource, 'sourceFile1.txt')
       const destination = path.join(testFolderDest, 'destFile1.txt')
 
       fse.writeFileSync(source, 'some data')
@@ -82,7 +89,7 @@ describe('FileCopier', () => {
     })
 
     test('#_processQueueItem() should move a file successfully', async () => {
-      const source = path.join(testFolder, 'sourceFile2.txt')
+      const source = path.join(testFolderSource, 'sourceFile2.txt')
       const destination = path.join(testFolderDest, 'destFile2.txt')
 
       fse.writeFileSync(source, 'some data')
@@ -100,7 +107,7 @@ describe('FileCopier', () => {
     })
 
     test('#_processQueueItem() should return false and rename destination when duplicate filename is found', async () => {
-      const source = path.join(testFolder, 'sourceFile3.txt')
+      const source = path.join(testFolderSource, 'sourceFile3.txt')
       const destination = path.join(testFolderDest, 'destFile3.txt')
       const fileParams = {
         source,
@@ -121,10 +128,10 @@ describe('FileCopier', () => {
     })
 
     test('#_processQueueItem() should return false and rename destination to duplicate folder when exact duplicate file is found', async () => {
-      const source = path.join(testFolder, 'sourceFile4.txt')
+      const source = path.join(testFolderSource, 'sourceFile4.txt')
       const destination = path.join(testFolderDest, 'sourceFile4.txt')
 
-      fc.duplicatesDir = path.join(testFolder, '/duplicates/')
+      fc.duplicatesDir = path.join(testFolderSource, '/duplicates/')
       const expectedDupeDestination = path.join(fc.duplicatesDir, 'sourceFile4.txt')
 
       const fileParams = {
@@ -157,7 +164,7 @@ describe('FileCopier', () => {
     test('Queue should run and emit event when complete', (done) => {
       const destFileList = []
 
-      fc.on(FileCopier.EVENT_QUEUE_COMPLETE, () => {
+      fc.once(FileCopier.EVENT_QUEUE_COMPLETE, () => {
         expect(fc._fileQueue).toHaveLength(0)
 
         destFileList.forEach((filePath) => {
@@ -168,8 +175,8 @@ describe('FileCopier', () => {
       })
 
       for (let i = 0; i < 5; i++) {
-        const source = path.join(testFolder, `queue_source_${i}.txt`)
-        const destination = path.join(testFolderDest, `queue_dest_${i}.txt`)
+        const source = path.join(testFolderSource, `queue_source_test1_${i}.txt`)
+        const destination = path.join(testFolderDest, `queue_dest_test1_${i}.txt`)
         fse.writeFileSync(source, 'some data')
 
         destFileList.push(destination)
@@ -184,7 +191,7 @@ describe('FileCopier', () => {
       let numFiles = 0
       const startTime = new Date()
 
-      fc.on(FileCopier.EVENT_QUEUE_COMPLETE, () => {
+      fc.once(FileCopier.EVENT_QUEUE_COMPLETE, () => {
         expect(fc._fileQueue).toHaveLength(0)
 
         destFileList.forEach((filePath) => {
@@ -198,8 +205,8 @@ describe('FileCopier', () => {
       })
 
       for (numFiles = 0; numFiles < 5; numFiles++) {
-        const source = path.join(testFolder, `queue_source_${numFiles}.txt`)
-        const destination = path.join(testFolderDest, `queue_dest_${numFiles}.txt`)
+        const source = path.join(testFolderSource, `queue_source_test2_${numFiles}.txt`)
+        const destination = path.join(testFolderDest, `queue_dest_test2_${numFiles}.txt`)
         fse.writeFileSync(source, 'some data')
 
         destFileList.push(destination)
