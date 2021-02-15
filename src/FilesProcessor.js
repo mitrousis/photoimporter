@@ -22,6 +22,11 @@ class FilesProcessor extends EventListener {
     this._fileCopier.on(FileCopier.EVENT_QUEUE_COMPLETE, async () => {
       this.emit(FilesProcessor.EVENT_COMPLETE)
 
+      // Let the SD know that files processing is complete, and the drive can be ejected
+      if (this._sdWatcher) {
+        await this._sdWatcher.filesProcessingComplete()
+      }
+
       if (!watch) {
         await this.stop()
       }

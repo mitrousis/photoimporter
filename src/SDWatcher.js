@@ -1,6 +1,9 @@
 const drivelist = require('drivelist')
 const Watcher = require('./Watcher')
 const Logger = require('./Logger')
+const { execSync } = require('child_process')
+const os = require('os')
+
 /**
  * Watches for specified removable disks, then adds their
  * mountpoint to watcher to be watched for changes
@@ -27,6 +30,11 @@ class SDWatcher extends Watcher {
   stop () {
     clearTimeout(this._sdCardPollingTimeoutRef)
     return super.stop()
+  }
+
+  async filesProcessingComplete () {
+    Logger.info('Removable drive file processing complete, unmounting drives', 'SDWatcher')
+    return await this._unmountDrives()
   }
 
   async _nextDrivePoll () {
@@ -96,6 +104,24 @@ class SDWatcher extends Watcher {
     }
 
     return mountedSDCards
+  }
+
+  // Unmounts all the drives though in practice there's probably
+  // only one attached at any given time
+  async _unmountDrives () {
+    if (os.platform() !== 'darwin') {
+      Logger.error('Automatic unmounting of removable drives is only supported on Mac', 'SDWatcher')
+    } else {
+      this._knownSDCards.forEach((drive) => {
+        // Mac only
+        try {
+          execSync(`hdiutil detach ${drive.path}`)
+          Logger.verbose(`${drive.path} was unmounted`, 'SDWatcher')
+        } catch (e) {
+          Logger.error(`Could not unmount ${drive.path}`, 'SDWatcher', e)
+        }
+      })
+    }
   }
 }
 
