@@ -22,7 +22,7 @@ class Watcher extends EventEmitter {
    * @param {string} ignored ignore pattern
    * @param {number} depth
    */
-  watch (watchDirPath, ignored = '', depth = 99) {
+  watch (watchDirPath, ignored = null, depth = 99) {
     Logger.info(`Watching path ${watchDirPath}`, 'Watcher')
     // If the chokidar instance exists, call 'add'
     if (this._chokidarWatcher) {

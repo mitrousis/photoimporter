@@ -4,19 +4,30 @@ const fse = require('fs-extra')
 
 describe('Watcher', () => {
   let testWatchDirPath
+  let watcher
 
   beforeAll(() => {
     testWatchDirPath = path.join(__dirname, './_fixtures/', 'test-watch-folder')
     fse.mkdirpSync(testWatchDirPath)
   })
 
+  afterEach((done) => {
+    if (watcher) {
+      watcher.removeAllListeners()
+      watcher.stop()
+        .then(() => {
+          watcher = null
+          done()
+        })
+    }
+  })
   // Cleanup
   afterAll(() => {
     fse.removeSync(testWatchDirPath)
   })
 
   test('Should wait until files stop add events', (done) => {
-    const watcher = new Watcher()
+    watcher = new Watcher()
 
     watcher.watch(testWatchDirPath)
 
@@ -45,18 +56,14 @@ describe('Watcher', () => {
         expect.arrayContaining(expectedFileList)
       )
 
-      watcher.stop()
-        .then(() => {
-          watcher.removeAllListeners(Watcher.EVENT_FILE_LIST_UPDATED)
-          done()
-        })
+      done()
     })
   }, 8000)
 
   test('Watching empty folder should not hang process', (done) => {
     expect.assertions(1)
 
-    const watcher = new Watcher()
+    watcher = new Watcher()
 
     const emptyWatchDir = path.join(__dirname, './_fixtures/', 'test-watch-folder', './empty')
     fse.mkdirpSync(emptyWatchDir)
@@ -64,13 +71,53 @@ describe('Watcher', () => {
     watcher.on(Watcher.EVENT_FILE_LIST_UPDATED, (updatedFileList) => {
       expect(updatedFileList).toHaveLength(0)
 
-      watcher.stop()
-        .then(() => {
-          watcher.removeAllListeners(Watcher.EVENT_FILE_LIST_UPDATED)
-          done()
-        })
+      done()
     })
 
     watcher.watch(emptyWatchDir)
   })
+
+  test('Adding files to a _duplicates folder shouldn\'t trigger watching', (done) => {
+    expect.assertions(3)
+
+    watcher = new Watcher()
+
+    const watchDir = path.join(__dirname, './_fixtures/', 'test-watch-folder', './dupecheck')
+    const subfolderWatchDir = path.join(__dirname, './_fixtures/', 'test-watch-folder', './dupecheck/subfolder')
+    const duplicatesDir = path.join(__dirname, './_fixtures/', 'test-watch-folder', './dupecheck/_duplicates')
+
+    const expectedFirstFile = path.join(watchDir, 'file1.txt')
+    const expectedSecondFile = path.join(subfolderWatchDir, 'file2.txt')
+    const notExpectedSecondFile = path.join(duplicatesDir, 'file3.txt')
+
+    fse.mkdirpSync(watchDir)
+
+    // First event
+    watcher.once(Watcher.EVENT_FILE_LIST_UPDATED, (updatedFileList) => {
+      expect(updatedFileList[0]).toEqual(expectedFirstFile)
+
+      // Second event
+      watcher.once(Watcher.EVENT_FILE_LIST_UPDATED, (updatedFileList) => {
+        expect(updatedFileList[0]).not.toEqual(notExpectedSecondFile)
+        expect(updatedFileList[0]).toEqual(expectedSecondFile)
+
+        done()
+      })
+
+      // Write second file
+      fse.mkdirpSync(duplicatesDir)
+      fse.writeFileSync(notExpectedSecondFile, '0')
+
+      // setTimeout(() => {
+      //   // Write expected file
+      fse.mkdirpSync(subfolderWatchDir)
+      fse.writeFileSync(expectedSecondFile, '0')
+      // }, 1000)
+    })
+
+    watcher.watch(watchDir, '**/_duplicates/**')
+
+    // Write first file
+    fse.writeFileSync(expectedFirstFile, '0')
+  }, 10000)
 })
