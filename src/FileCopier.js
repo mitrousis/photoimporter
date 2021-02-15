@@ -4,8 +4,6 @@ const fse = require('fs-extra')
 const Logger = require('./Logger')
 const md5File = require('md5-file')
 
-// TODO - duplicates dir needs to be relative to the source, since there can be multiple source folders
-
 class FileCopier extends EventListener {
   constructor () {
     super()
@@ -169,7 +167,9 @@ class FileCopier extends EventListener {
               queueItem
             )
           }
-          processSuccess = false
+        } else {
+          // Destination is a dupe, but don't need to preserve, so consider a success
+          processSuccess = true
         }
       } else {
         Logger.error('Could not copy file', 'FileCopier', error)

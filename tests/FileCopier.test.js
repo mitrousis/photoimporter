@@ -66,12 +66,17 @@ describe('FileCopier integration tests', () => {
     fc = new FileCopier()
   })
 
+  afterEach(() => {
+    fc.removeAllListeners()
+    fc = null
+  })
+
   afterAll(() => {
     fse.removeSync(path.join(__dirname, './_fixtures/', 'delete_me_filecopier/'))
   })
 
   describe('#_processQueueItem()', () => {
-    test('#_processQueueItem() should copy a file successfully', async () => {
+    test('#_processQueueItem() should copy a file successfully and empty the queue', async () => {
       const source = path.join(testFolderSource, 'sourceFile1.txt')
       const destination = path.join(testFolderDest, 'destFile1.txt')
 
@@ -81,14 +86,15 @@ describe('FileCopier integration tests', () => {
         source,
         destination,
         moveFile: false,
-        preserveDuplicate: true
+        preserveDuplicate: false
       })
 
       expect(success).toEqual(true)
       expect(fse.existsSync(destination)).toEqual(true)
+      expect(fc._fileQueue.length).toEqual(0)
     })
 
-    test('#_processQueueItem() should move a file successfully', async () => {
+    test('#_processQueueItem() should move a file successfully and empty the queue', async () => {
       const source = path.join(testFolderSource, 'sourceFile2.txt')
       const destination = path.join(testFolderDest, 'destFile2.txt')
 
@@ -104,6 +110,7 @@ describe('FileCopier integration tests', () => {
       expect(success).toEqual(true)
       expect(fse.existsSync(destination)).toEqual(true)
       expect(fse.existsSync(source)).toEqual(false)
+      expect(fc._fileQueue.length).toEqual(0)
     })
 
     test('#_processQueueItem() should return false and rename destination when duplicate filename is found', async () => {
@@ -127,7 +134,7 @@ describe('FileCopier integration tests', () => {
       expect(fse.existsSync(source)).toEqual(true)
     })
 
-    test.only('#_processQueueItem() should return false and rename destination to duplicate folder when exact duplicate file is found', async () => {
+    test('#_processQueueItem() should return false and rename destination to duplicate folder when exact duplicate file is found', async () => {
       const source = path.join(testFolderSource, 'sourceFile4.txt')
       const destination = path.join(testFolderDest, 'sourceFile4.txt')
 
@@ -157,6 +164,29 @@ describe('FileCopier integration tests', () => {
         moveFile: true,
         preserveDuplicate: false
       })
+    })
+
+    test('#_processQueueItem() should continue with a copy operation and no need to save duplicates', async () => {
+      const source = path.join(testFolderSource, 'sourceFile10.txt')
+      const destination = path.join(testFolderDest, 'sourceFile10.txt')
+
+      const fileParams = {
+        source,
+        destination,
+        moveFile: false,
+        preserveDuplicate: false
+      }
+
+      fse.writeFileSync(source, 'matching data')
+      fse.writeFileSync(destination, 'matching data')
+
+      const success = await fc._processQueueItem(fileParams)
+
+      expect(success).toEqual(true)
+      // Shouldn't have moved
+      expect(fse.existsSync(source)).toEqual(true)
+      // Queue should be empty
+      expect(fc._fileQueue.length).toEqual(0)
     })
   })
 
