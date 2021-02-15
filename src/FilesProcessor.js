@@ -36,7 +36,7 @@ class FilesProcessor extends EventListener {
 
     // Watcher accepts array or string for source
     // Also ignore "duplicates" folder name
-    this._watcher.watch(sources, this._fileCopier.duplicatesDirName)
+    this._watcher.watch(sources, new RegExp(this._fileCopier.duplicatesDirName))
 
     // Create a watcher for SD cards outside of sources
     if (removableDiskLabels && removableDiskLabels.length) {
@@ -44,7 +44,7 @@ class FilesProcessor extends EventListener {
       this._sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
         await this._processFileList(fileList, false)
       })
-      this._sdWatcher.watch(removableDiskLabels, this._fileCopier.duplicatesDirName)
+      this._sdWatcher.watch(removableDiskLabels, new RegExp(this._fileCopier.duplicatesDirName))
     }
   }
 

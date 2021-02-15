@@ -1,5 +1,5 @@
 const Configstore = require('configstore')
-const { argv } = require('yargs')
+const yargs = require('yargs/yargs')
 const Logger = require('./Logger')
 const fse = require('fs-extra')
 
@@ -26,53 +26,96 @@ class AppConfig {
         ])
     }
 
-    /** @type {String|Array} */
-    let source = argv.source || argv.s || this._configStore.get('source') || []
-    const destination = argv.destination || argv.d || this._configStore.get('destination') || null
+    const parsed = yargs(process.argv.slice(2))
+      .options({
+        directories: {
+          describe: 'Directories to import/watch',
+          demandOption: false,
+          type: 'array'
+        },
+        drives: {
+          describe: 'Removable drive labels to import/watch',
+          demandOption: false,
+          type: 'array'
+        },
+        destination: {
+          describe: 'Target directory for copying',
+          type: 'string',
+          demandOption: false
+        },
+        watch: {
+          describe: 'Continue watching directories/drives for changes',
+          default: null,
+          type: 'boolean'
+        }
+      })
+      .check((argv) => {
+        // Ensure watch folders or watch drives is avail
+        let hasValidArguments = false
+        if (argv.directories && argv.directories.length) hasValidArguments = true
+        if (argv.drives && argv.drives.length) hasValidArguments = true
+        if (this._configStore.get('directories') && this._configStore.get('directories').length) hasValidArguments = true
+        if (this._configStore.get('drives') && this._configStore.get('drives').length) hasValidArguments = true
+
+        if (!hasValidArguments) {
+          throw new Error('At least one of directories or drives must be provided or present in stored config')
+        }
+
+        // Check for destination
+        hasValidArguments = false
+        if (argv.destination) hasValidArguments = true
+        if (this._configStore.get('destination')) hasValidArguments = true
+
+        if (!hasValidArguments) {
+          throw new Error('Destination must be provided or present in stored config')
+        }
+
+        return true
+      })
+      .help()
+      .argv
+
+    let { directories, drives, destination, watch } = parsed
+
+    directories = directories || this._configStore.get('directories') || []
+    drives = drives || this._configStore.get('drives') || []
+    destination = destination || this._configStore.get('destination')
 
     // '--watch' must be explicitly set to 'false' to stop watching
-    let watch = this._configStore.get('watch') || false
-    if (argv.watch === 'false') watch = false
-    if (argv.watch === true || argv.watch === 'true') watch = true
+    watch = (watch === null) ? !!this._configStore.get('watch') : watch
 
-    if (typeof source === 'string') source = [].concat(source.split(','))
-
-    if (source.length === 0) {
-      Logger.error('Must have at least one source directory', 'AppConfig')
-      process.exit(1)
-    }
-
-    source.forEach((sourceDir) => {
-      if (!fse.existsSync(sourceDir)) {
-        Logger.error(`Source directory "${sourceDir}" doesn't exist`, 'AppConfig')
+    directories.forEach((dir) => {
+      if (!fse.existsSync(dir)) {
+        Logger.error(`Source directory: ${dir} does not exist`, 'AppConfig')
         process.exit(1)
       }
     })
 
-    if (destination === null) {
-      Logger.error('Must have an import destination', 'AppConfig')
-      process.exit(1)
-    }
-
     if (!fse.existsSync(destination)) {
-      Logger.error(`Destination directory "${destination}" doesn't exist`, 'AppConfig')
+      Logger.error(`Destination directory: ${destination} does not exist`, 'AppConfig')
       process.exit(1)
     }
 
-    Logger.verbose(`Using source directory(s): ${source.join(', ')}`, 'AppConfig')
-    Logger.verbose(`Using destination directory: ${destination}`, 'AppConfig')
-    Logger.verbose(`Watch for changes: ${watch}`, 'AppConfig')
-
-    this._configStore.set('source', source)
+    this._configStore.set('directories', directories)
+    this._configStore.set('drives', drives)
     this._configStore.set('destination', destination)
     this._configStore.set('watch', watch)
+
+    Logger.verbose(`Using source directory(s): ${directories.join(', ')}`, 'AppConfig')
+    Logger.verbose(`Using source drive(s): ${drives.join(', ')}`, 'AppConfig')
+    Logger.verbose(`Using destination directory: ${destination}`, 'AppConfig')
+    Logger.verbose(`Watch for changes: ${watch}`, 'AppConfig')
   }
 
   /**
    * @returns {Array} Array of source folders
    */
-  get source () {
-    return this._configStore.get('source')
+  get directories () {
+    return this._configStore.get('directories')
+  }
+
+  get drives () {
+    return this._configStore.get('drives')
   }
 
   get destination () {

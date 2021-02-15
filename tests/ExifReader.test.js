@@ -2,7 +2,7 @@ const ExifReader = require('../src/ExifReader')
 const path = require('path')
 const fse = require('fs-extra')
 
-describe('ExifReader', () => {
+describe('ExifReader integration tests', () => {
   const fixtures = path.join(__dirname, './_fixtures/')
   const exifReader = new ExifReader()
 

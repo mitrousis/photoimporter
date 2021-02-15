@@ -2,7 +2,7 @@ const Watcher = require('../src/Watcher')
 const path = require('path')
 const fse = require('fs-extra')
 
-describe('Watcher', () => {
+describe('Watcher integration tests', () => {
   let testWatchDirPath
   let watcher
 

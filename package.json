@@ -8,6 +8,7 @@
     "test:integration": "jest --runInBand --detectOpenHandles --testPathPattern='test.js$' --testNamePattern='integration' --testRegex",
     "test": "jest --runInBand --detectOpenHandles --testPathPattern='test.js$' --testRegex"
   },
+  "main" : "index.js",
   "bin": {
     "photoimport": "./index.js"
   },

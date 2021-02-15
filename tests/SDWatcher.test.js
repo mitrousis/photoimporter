@@ -2,7 +2,7 @@ const SDWatcher = require('../src/SDWatcher')
 const driveListNoSD = require('./_fixtures/drivelist-no-sd.json')
 const driveListWithSD = require('./_fixtures/drivelist-with-sd.json')
 
-describe('SDWatcher', () => {
+describe('SDWatcher unit tests', () => {
   const validDriveLabels = ['NO NAME']
 
   test('#_getMountedSDCards() should not find SD drives', () => {

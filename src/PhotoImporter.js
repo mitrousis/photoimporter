@@ -1,6 +1,4 @@
-const cliArguments = require('./Cli')
+const AppConfig = require('./AppConfig')
 const FilesProcessor = require('./FilesProcessor')
 
-console.log(cliArguments)
-
-const fp = new FilesProcessor(jestTestVariables.sourcePath, jestTestVariables.destPath, duplicatesDir, null, false)
+const fp = new FilesProcessor(AppConfig.directories, AppConfig.destination, AppConfig.drives, AppConfig.shouldWatch)
