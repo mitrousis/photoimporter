@@ -12,7 +12,7 @@ class AppConfig {
     // This is currently only used for testing and shouldn't be changed for general use
     const configPath = process.env.CONFIG_PATH || null
 
-    this._configStore = new Configstore('photoimporter', null, {
+    this._configStore = new Configstore('PhotoImporter', null, {
       configPath
     })
 
@@ -25,7 +25,9 @@ class AppConfig {
           'ImageWidth'
         ])
     }
+  }
 
+  parseCli () {
     const parsed = yargs(process.argv.slice(2))
       .options({
         directories: {
@@ -50,7 +52,7 @@ class AppConfig {
         }
       })
       .check((argv) => {
-        // Ensure watch folders or watch drives is avail
+      // Ensure watch folders or watch drives is avail
         let hasValidArguments = false
         if (argv.directories && argv.directories.length) hasValidArguments = true
         if (argv.drives && argv.drives.length) hasValidArguments = true

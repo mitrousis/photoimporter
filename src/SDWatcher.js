@@ -3,6 +3,8 @@ const Watcher = require('./Watcher')
 const Logger = require('./Logger')
 const { execSync } = require('child_process')
 const os = require('os')
+const path = require('path')
+const PlaySound = require('play-sound')()
 
 /**
  * Watches for specified removable disks, then adds their
@@ -109,6 +111,8 @@ class SDWatcher extends Watcher {
   // Unmounts all the drives though in practice there's probably
   // only one attached at any given time
   async _unmountDrives () {
+    let didUnmount = false
+
     if (os.platform() !== 'darwin') {
       Logger.error('Automatic unmounting of removable drives is only supported on Mac', 'SDWatcher')
     } else {
@@ -117,11 +121,24 @@ class SDWatcher extends Watcher {
         try {
           execSync(`hdiutil detach ${drive.path}`)
           Logger.verbose(`${drive.path} was unmounted`, 'SDWatcher')
+          didUnmount = true
         } catch (e) {
           Logger.error(`Could not unmount ${drive.path}`, 'SDWatcher', e)
         }
       })
     }
+
+    // Play a sound so you know the card is ready to be removed
+    return new Promise((resolve) => {
+      if (didUnmount) {
+        PlaySound.play(path.join(__dirname, './notification_decorative-01.wav'), function (err) { // eslint-disable-line handle-callback-err
+          if (err) console.log(err)
+          resolve()
+        })
+      } else {
+        resolve()
+      }
+    })
   }
 }
 
