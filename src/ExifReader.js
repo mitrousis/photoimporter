@@ -95,11 +95,24 @@ class EXIFReader {
     // Found in iPhone video files
     } else if (exifTags.CreationDate !== undefined) {
       dateNode = exifTags.CreationDate
+    // CreateDate found on a Sony camera video
+    } else if (exifTags.CreateDate !== undefined) {
+      dateNode = exifTags.CreateDate
+    }
+
+    // Validate the node was correctly parsed by exiftool
+    if (dateNode.year) {
+      return new Date(
+        dateNode.year,
+        dateNode.month - 1,
+        dateNode.day,
+        dateNode.hour,
+        dateNode.minute,
+        dateNode.second
+      )
     } else {
       return null
     }
-
-    return new Date(dateNode.year, dateNode.month - 1, dateNode.day, dateNode.hour, dateNode.minute, dateNode.second)
   }
 }
 
