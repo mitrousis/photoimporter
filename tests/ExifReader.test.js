@@ -15,6 +15,11 @@ describe('ExifReader integration tests', () => {
     expect(exifReader._confirmValidTags(tags, ['ImageWidth'])).toEqual(true)
   })
 
+  test('#_confirmValidTags() tag checking allows for multiple OR matches', () => {
+    const tags = fse.readJsonSync(path.join(fixtures, '/exif/exif_exifimagewidth_tag.json'))
+    expect(exifReader._confirmValidTags(tags, ['ImageWidth', 'ExifImageWidth'])).toEqual(true)
+  })
+
   test('#_confirmValidTags() expect missing ImageWidth tag in non-image file', () => {
     const tags = fse.readJsonSync(path.join(fixtures, '/exif/exif_test_zip.json'))
     expect(exifReader._confirmValidTags(tags, ['ImageWidth'])).toEqual(false)

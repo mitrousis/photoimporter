@@ -22,7 +22,8 @@ class AppConfig {
     if (!this._configStore.has('validExifTags')) {
       this._configStore.set('validExifTags',
         [
-          'ImageWidth'
+          'ImageWidth',
+          'ExifImageWidth'
         ])
     }
   }
