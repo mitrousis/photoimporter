@@ -39,7 +39,12 @@
       "/node_modules/"
     ],
     "collectCoverage": true,
-    "coverageReporters": ["json", "text", "lcovonly", "clover"],
+    "coverageReporters": [
+      "json",
+      "text",
+      "lcovonly",
+      "clover"
+    ],
     "globalSetup": "./tests/JestGlobalSetup.js",
     "globalTeardown": "./tests/JestGlobalTeardown.js",
     "bail": false

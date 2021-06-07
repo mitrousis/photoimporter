@@ -13,3 +13,19 @@ PhotoImporter is a personal project to help manage photos on my computer. The go
 
 Caveats:
 - It's only been tested, used on MacOS
+
+
+### Using
+
+Suggested to install globally, `npm install -g` so that it can be run from the command line as `PhotoImporter`.
+
+Command line arguments:
+
+
+`--directories=path/to/watch,path/to/watch2/` Directories to import/watch
+
+`--drives=SD CARD NAME,UNTITLED` Removable drive labels to import/watch
+
+`--destination=path/to/folder`  Target directory for copying                           
+
+`--watch=true` Continue watching directories/drives for changes
