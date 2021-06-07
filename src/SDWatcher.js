@@ -15,7 +15,7 @@ class SDWatcher extends Watcher {
     super()
 
     this._validDriveLabels = []
-    this._sdCardPollingInterval = 2000
+    this._sdCardPollingInterval = 5000
     this._sdCardPollingTimeoutRef = null
     this._knownSDCards = []
   }
@@ -119,11 +119,11 @@ class SDWatcher extends Watcher {
       this._knownSDCards.forEach((drive) => {
         // Mac only
         try {
-          execSync(`hdiutil detach ${drive.path}`)
-          Logger.verbose(`${drive.path} was unmounted`, 'SDWatcher')
+          execSync(`hdiutil detach "${drive.path}"`)
+          Logger.verbose(`"${drive.path}" was unmounted`, 'SDWatcher')
           didUnmount = true
         } catch (e) {
-          Logger.error(`Could not unmount ${drive.path}`, 'SDWatcher', e)
+          Logger.error(`Could not unmount "${drive.path}"`, 'SDWatcher', e)
         }
       })
     }
