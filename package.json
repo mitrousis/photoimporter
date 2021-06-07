@@ -18,7 +18,7 @@
     "configstore": "^5.0.1",
     "daemonize2": "^0.4.2",
     "drivelist": "^8.0.10",
-    "exiftool-vendored": "^12.2.0",
+    "exiftool-vendored": "^14.3.0",
     "fs-extra": "^8.1.0",
     "md5-file": "^4.0.0",
     "play-sound": "^1.1.3",
