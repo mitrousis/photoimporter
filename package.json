@@ -16,7 +16,6 @@
     "chokidar": "^3.4.3",
     "colors": "^1.4.0",
     "configstore": "^5.0.1",
-    "daemonize2": "^0.4.2",
     "drivelist": "^8.0.10",
     "exiftool-vendored": "^14.3.0",
     "fs-extra": "^8.1.0",
