@@ -1,0 +1,17 @@
+{
+	"source": [
+		"/Users/nicholas.mitrousis/_Projects/photoimport/tests/_fixtures/integration-tests-temp/test-source"
+	],
+	"destination": "/Users/nicholas.mitrousis/_Projects/photoimport/tests/_fixtures/integration-tests-temp/test-destination/e2e",
+	"watch": true,
+	"validExifTags": [
+		"ImageWidth",
+		"ExifImageWidth"
+	],
+	"directories": [
+		"/Users/nicholas.mitrousis/_Projects/photoimport/tests/_fixtures/integration-tests-temp/test-source/e2e"
+	],
+	"drives": [
+		"TEST_IMAGE"
+	]
+}
