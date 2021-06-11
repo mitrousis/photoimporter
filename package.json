@@ -6,6 +6,7 @@
   "scripts": {
     "test:unit": "jest --runInBand --detectOpenHandles --testPathPattern=\"\\.test\\.js$\" --testNamePattern='^((?!integration).)*$' --testRegex",
     "test:integration": "jest --runInBand --detectOpenHandles --testPathPattern=\"\\.test\\.js$\" --testNamePattern='integration' --testRegex",
+    "test:e2e": "jest --runInBand --detectOpenHandles --testPathPattern=\"\\.e2e\\.js$\" --testRegex",
     "test": "jest --runInBand --detectOpenHandles --testPathPattern=\"\\.test\\.js$\" --testRegex"
   },
   "main": "index.js",
@@ -18,7 +19,7 @@
     "configstore": "^5.0.1",
     "drivelist": "^8.0.10",
     "exiftool-vendored": "^14.3.0",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^10.0.0",
     "md5-file": "^4.0.0",
     "play-sound": "^1.1.3",
     "throttle-debounce": "^2.3.0",
