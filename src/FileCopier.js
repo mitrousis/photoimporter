@@ -95,11 +95,11 @@ class FileCopier extends EventListener {
    * and an issue where the SD is mounted while processing files
    */
   _waitToEmptyQueue () {
-    Logger.verbose('File queue emptied', 'FileCopier')
-
     clearTimeout(this._queueEmptyTimeout)
 
     this._queueEmptyTimeout = setTimeout(() => {
+      Logger.verbose('File queue emptied', 'FileCopier')
+
       if (this._fileQueue.length === 0) {
         this._onQueueEmptied()
       } else {
@@ -121,8 +121,6 @@ class FileCopier extends EventListener {
    * @param {object} queueItem
    */
   async _processQueueItem (queueItem) {
-    Logger.info(`Processing ${queueItem.source} -> ${queueItem.destination}`, 'FileCopier')
-
     let processSuccess = false
 
     try {
@@ -140,6 +138,7 @@ class FileCopier extends EventListener {
         })
       }
 
+      Logger.info(`Success: ${queueItem.source} -> ${queueItem.destination}`, 'FileCopier')
       processSuccess = true
     } catch (error) {
       if (error.message.match(/already exists/)) {
@@ -148,6 +147,8 @@ class FileCopier extends EventListener {
           // These are the same hash, move to dupes folder
           // and overwrite any existing dupes
           if (this._compareFiles(queueItem.source, queueItem.destination)) {
+            Logger.info(`Duplicate (will preserve): ${queueItem.source} -> ${queueItem.destination}`, 'FileCopier')
+
             // create dupes dir
             const dupesFullDirPath = path.join(path.dirname(queueItem.source), this._duplicatesDirName)
             fse.mkdirpSync(dupesFullDirPath)
@@ -160,6 +161,8 @@ class FileCopier extends EventListener {
               queueItem
             )
           } else {
+            Logger.info(`Same file, different image (incrementing): ${queueItem.source} -> ${queueItem.destination}`, 'FileCopier')
+
             // Files were different hashes, but same filename. Increment filename.
             const newDestination = this._incrementFilename(queueItem.destination)
             this.addToQueue(
@@ -171,11 +174,12 @@ class FileCopier extends EventListener {
             )
           }
         } else {
+          Logger.info(`Duplicate (skipping) ${queueItem.source} -> ${queueItem.destination}`, 'FileCopier')
           // Destination is a dupe, but don't need to preserve, so consider a success
           processSuccess = true
         }
       } else {
-        Logger.error('Could not copy file', 'FileCopier', error)
+        Logger.error(`Error processing ${queueItem.source} -> ${queueItem.destination}`, 'FileCopier', error)
         processSuccess = true
       }
     }

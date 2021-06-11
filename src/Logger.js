@@ -64,7 +64,7 @@ class Logger {
     if (useColor) combineOptions.push(format.colorize())
 
     combineOptions.push(
-      format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSSZZ' })
+      format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' })
     )
 
     combineOptions.push(
