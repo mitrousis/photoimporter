@@ -1,11 +1,15 @@
 const SDWatcher = require('../src/SDWatcher')
+const { execSync } = require('child_process')
+const path = require('path')
 const driveListNoSD = require('./_fixtures/drivelist-no-sd.json')
 const driveListWithSD = require('./_fixtures/drivelist-with-sd.json')
+const Watcher = require('../src/Watcher')
+const { removeAllListeners } = require('process')
 
 describe('SDWatcher unit tests', () => {
   const validDriveLabels = ['NO NAME']
 
-  test('#_getMountedSDCards() should not find SD drives', () => {
+  test('#_getMountedSDCards() should not find drives is nothing is mounted', () => {
     const sdWatcher = new SDWatcher()
     sdWatcher._validDriveLabels = validDriveLabels
 
@@ -13,7 +17,7 @@ describe('SDWatcher unit tests', () => {
     expect(sdWatcher._getMountedSDCards(driveListNoSD).length).toEqual(0)
   })
 
-  test('#_getMountedSDCards() should find SD drives', () => {
+  test('#_getMountedSDCards() should find drives', () => {
     const sdWatcher = new SDWatcher()
     sdWatcher._validDriveLabels = validDriveLabels
 
@@ -28,7 +32,6 @@ describe('SDWatcher unit tests', () => {
     )
   })
 
-  /// This isn't working
   test('#_nextDrivePoll() should update known drive list when drive is found', (done) => {
     const sdWatcher = new SDWatcher()
 
@@ -111,3 +114,84 @@ describe('SDWatcher unit tests', () => {
     })
   })
 })
+
+describe('SDWatcher integration tests', () => {
+  let sdWatcher
+
+  afterEach(() => {
+    sdWatcher.stop()
+    sdWatcher.removeAllListeners(Watcher.EVENT_FILE_LIST_UPDATED)
+    _detachTestImage()
+  })
+
+  test('Volume should be able to mount and unmount more than once', (done) => {
+    sdWatcher = new SDWatcher()
+
+    let mountCount = 0
+
+    const waitAndMount = () => {
+      setTimeout(() => {
+        mountCount++
+        _attachTestImage()
+      }, 500)
+    }
+
+    sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, (fileList) => {
+      sdWatcher.filesProcessingComplete()
+        .then(() => {
+          if (mountCount === 2) {
+            expect(true).toBeTruthy()
+            done()
+          } else {
+            waitAndMount()
+          }
+        })
+    })
+
+    sdWatcher.watch('TEST_IMAGE')
+    waitAndMount()
+  }, 100000)
+
+  test('Calling filesProcessingComplete() before and after a drive is mounted should not error', (done) => {
+    sdWatcher = new SDWatcher()
+
+    const waitAndMount = () => {
+      setTimeout(() => {
+        _attachTestImage()
+      }, 500)
+    }
+
+    // Start watching
+    sdWatcher.watch('TEST_IMAGE')
+
+    // Called before mount
+    sdWatcher.filesProcessingComplete()
+      .then(() => {
+        waitAndMount()
+      })
+
+    // Wait for files to be found
+    sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, (fileList) => {
+      // Trigger complete
+      sdWatcher.filesProcessingComplete()
+        .then(() => {
+          // Then trigger complete again, explicitly calling done
+          expect(sdWatcher.filesProcessingComplete()).resolves.toBeUndefined()
+            .then(() => done())
+        })
+    })
+  }, 100000)
+})
+
+function _attachTestImage () {
+  const imagePath = path.join(__dirname, './_fixtures/TEST_IMAGE.dmg')
+  execSync(`hdiutil attach ${imagePath}`)
+}
+
+function _detachTestImage () {
+  try {
+    execSync('hdiutil detach /Volumes/TEST_IMAGE')
+  } catch (e) {
+
+  }
+}

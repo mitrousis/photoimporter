@@ -15,7 +15,7 @@ class SDWatcher extends Watcher {
     super()
 
     this._validDriveLabels = []
-    this._sdCardPollingInterval = 5000
+    this._sdCardPollingInterval = 4000
     this._sdCardPollingTimeoutRef = null
     this._knownSDCards = []
   }
@@ -64,6 +64,16 @@ class SDWatcher extends Watcher {
     return this._compareDrivesStatus(this._knownSDCards, mountedDrivesStatus)
   }
 
+  /**
+   * This is used to create a diff between "known" drives and new ones mounted
+   * the new set of known drives are added to chokidir. This is needed to make sure we:
+   * 1) keep monitoring the same volume for changes, even if it is removed (and added again) and
+   * 2) don't have chokdir add a drive more than once
+
+   * @param {Array} currDrivesStatus
+   * @param {Array} newDrivesStatus
+   * @returns {Array} new drives found
+   */
   _compareDrivesStatus (currDrivesStatus, newDrivesStatus) {
     const foundNewDrives = newDrivesStatus.filter((newDrive) => {
       // Checks if this drive path is already in list
