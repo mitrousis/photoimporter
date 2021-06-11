@@ -35,7 +35,6 @@ class SDWatcher extends Watcher {
   }
 
   async filesProcessingComplete () {
-    Logger.info('Removable drive file processing complete, unmounting drives', 'SDWatcher')
     return await this._unmountDrives()
   }
 
@@ -111,6 +110,8 @@ class SDWatcher extends Watcher {
   // Unmounts all the drives though in practice there's probably
   // only one attached at any given time
   async _unmountDrives () {
+    Logger.info('Unmounting any watched attached drives...', 'SDWatcher')
+
     let didUnmount = false
 
     if (os.platform() !== 'darwin') {

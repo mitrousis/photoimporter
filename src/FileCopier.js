@@ -95,7 +95,7 @@ class FileCopier extends EventListener {
    * and an issue where the SD is mounted while processing files
    */
   _waitToEmptyQueue () {
-    Logger.verbose('Queue emptied, waiting for last minute changes.', 'FileCopier')
+    Logger.verbose('File queue emptied', 'FileCopier')
 
     clearTimeout(this._queueEmptyTimeout)
 
