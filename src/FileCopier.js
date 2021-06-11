@@ -90,10 +90,13 @@ class FileCopier extends EventListener {
   }
 
   /**
-   * Wait for 1 second before emptying the queue, which allows
+   * Wait for 5 seconds before emptying the queue, which allows
    * for some delays in adding items to the queue race conditions
+   * and an issue where the SD is mounted while processing files
    */
   _waitToEmptyQueue () {
+    Logger.verbose('Queue emptied, waiting for last minute changes.', 'FileCopier')
+
     clearTimeout(this._queueEmptyTimeout)
 
     this._queueEmptyTimeout = setTimeout(() => {
@@ -102,7 +105,7 @@ class FileCopier extends EventListener {
       } else {
         this._continueQueue()
       }
-    }, 1000)
+    }, 5000)
   }
 
   /**

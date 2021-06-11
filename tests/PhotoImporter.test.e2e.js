@@ -33,10 +33,10 @@ if (os.platform() === 'darwin') {
       proc.stdout.on('data', (data) => {
         console.log(data.toString())
         if (stoutTimeout) clearTimeout(stoutTimeout)
-        // Wait 3 seconds after the last stout event to kill
+        // Wait 8 seconds after the last stout event to kill since there is no "complete" message fired
         stoutTimeout = setTimeout(() => {
           proc.kill()
-        }, 15000)
+        }, 8000)
       })
 
       proc.stderr.on('data', (data) => {
