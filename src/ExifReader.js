@@ -98,6 +98,10 @@ class EXIFReader {
     // CreateDate found on a Sony camera video
     } else if (exifTags.CreateDate !== undefined) {
       dateNode = exifTags.CreateDate
+    // Fall back to FileModifyDate, which could be changed, but hopefully is valid when
+    // first found on an SD or import
+    } else if (exifTags.FileModifyDate !== undefined) {
+      dateNode = exifTags.FileModifyDate
     }
 
     // Validate the node was correctly parsed by exiftool

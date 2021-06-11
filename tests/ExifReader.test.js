@@ -31,6 +31,7 @@ describe('ExifReader integration tests', () => {
     ['exif_test_iphone_video.json', new Date(2017, 10, 9, 16, 29, 26, 0)],
     ['exif_test_old_video.json', new Date(2005, 4, 14, 23, 42, 21, 0)],
     ['exif_sony_camera_video.json', new Date(2021, 4, 29, 18, 3, 58, 0)],
+    ['exif_filemodifydate_fallback.json', new Date(2019, 11, 31, 14, 23, 1, 0)],
     ['exif_invalid_date.json', null]
   ])(
     '#_getDateFromTags() %s, expected date: %s',

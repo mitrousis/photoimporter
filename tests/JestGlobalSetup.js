@@ -26,9 +26,9 @@ module.exports = async () => {
         sourcePath
       ],
       destination: destPath,
-      validExifTags: [
-        'ImageWidth'
-      ],
+      // validExifTags: [
+      //   'ImageWidth'
+      // ],
       watch: false
     })
 }
