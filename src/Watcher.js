@@ -7,6 +7,7 @@ class Watcher extends EventEmitter {
   constructor () {
     super()
 
+    this._chokidarWatcher = null
     // This should be 3000 or more, since chokidar will
     // use 2000 to ensure that file is done being written
     this._changeTriggerDelay = 3000
@@ -18,13 +19,19 @@ class Watcher extends EventEmitter {
   /**
    * Listens for changes via chokidar
    * then will update the file list once changes stop
-   * @param {string|array} watchDirPath
-   * @param {string} ignored ignore pattern
+   * @param {String|Array} watchDirPath
+   * @param {Array|String|RegExp|Function} ignored pattern, defaults to dot-files
    * @param {number} depth
    */
-  watch (watchDirPath, ignored = null, depth = 99) {
-    Logger.info(`Watching path ${watchDirPath}`, 'Watcher')
-    // If the chokidar instance exists, call 'add'
+  watch (watchDirPath, ignored = /.*\/\..*/, depth = 99) {
+    // See if this path is already in the watch list
+    // for messaging purposes as chokidar doesn't care
+    const currWatchList = this._chokidarWatcher ? this._chokidarWatcher.getWatched() : {}
+    if (!currWatchList[watchDirPath]) {
+      Logger.info(`Watching ${watchDirPath} for changes`, 'Watcher')
+    }
+
+    // If the chokidar instance exists, call 'add' instead of instantiation
     if (this._chokidarWatcher) {
       this._chokidarWatcher.add(watchDirPath)
     } else {

@@ -6,9 +6,18 @@ const os = require('os')
 
 const jestTestVariables = JSON.parse(process.env.jestTestVariables)
 const mediaFixtures = path.join(__dirname, './_fixtures/media')
-const duplicatesDir = path.join(jestTestVariables.destPath, './duplicates-test')
 
 describe('FilesProcessor integration tests', () => {
+  let fp
+
+  afterEach((done) => {
+    fp.removeAllListeners(FilesProcessor.EVENT_COMPLETE)
+    fp.stop()
+      .then(() => {
+        done()
+      })
+  })
+
   test('Should move images into their expected destination folder when run once', (done) => {
     // Setup some test files
     for (var i = 0; i < 10; i++) {
@@ -20,23 +29,18 @@ describe('FilesProcessor integration tests', () => {
 
     const expectedValidPath = path.join(jestTestVariables.destPath, './2017-11/test_image_9.jpg')
 
-    const fp = new FilesProcessor(jestTestVariables.sourcePath, jestTestVariables.destPath, duplicatesDir, null, false)
+    fp = new FilesProcessor(jestTestVariables.sourcePath, jestTestVariables.destPath, null, false)
 
     fp.on(FilesProcessor.EVENT_COMPLETE, () => {
       // Quick check that the last file was copied
       expect(fse.pathExistsSync(expectedValidPath)).toEqual(true)
-      fp.removeAllListeners(FilesProcessor.EVENT_COMPLETE)
       done()
     })
-  }, 8000)
+  }, 12000)
 
   // --- Only run these on OSX
   if (os.platform() === 'darwin') {
     describe('Removable disk tests', () => {
-      beforeAll(() => {
-
-      })
-
       afterAll(() => {
         _detachTestImage()
       })
@@ -46,23 +50,19 @@ describe('FilesProcessor integration tests', () => {
         const expectedSDPath = '/Volumes/TEST_IMAGE/DCIM/100TEST/sd-image.jpg'
 
         // Note that watch should be -true- in order to wait for the disk to mount
-        const fp = new FilesProcessor(jestTestVariables.sourcePath, jestTestVariables.destPath, duplicatesDir, ['TEST_IMAGE'], true)
+        fp = new FilesProcessor(jestTestVariables.sourcePath, jestTestVariables.destPath, ['TEST_IMAGE'], true)
 
         fp.on(FilesProcessor.EVENT_COMPLETE, () => {
         // Quick check that the last file was copied
           expect(fse.pathExistsSync(expectedValidPath)).toEqual(true)
           expect(fse.pathExistsSync(expectedSDPath)).toEqual(true)
-          fp.removeAllListeners(FilesProcessor.EVENT_COMPLETE)
-          fp.stop()
-            .then(() => {
-              done()
-            })
+          done()
         })
 
         setTimeout(() => {
           _attachTestImage()
-        }, 2000)
-      }, 12000)
+        }, 500)
+      }, 25000)
     })
   }
 })
@@ -73,5 +73,9 @@ function _attachTestImage () {
 }
 
 function _detachTestImage () {
-  execSync('hdiutil detach /Volumes/TEST_IMAGE')
+  try {
+    execSync('hdiutil detach /Volumes/TEST_IMAGE')
+  } catch (e) {
+
+  }
 }

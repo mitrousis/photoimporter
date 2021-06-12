@@ -213,7 +213,7 @@ describe('FileCopier integration tests', () => {
 
         fc.addToQueue(source, destination, true, false)
       }
-    }, 3000)
+    }, 12000)
 
     test('Adding items to a queue over time should make it continue processing', (done) => {
       const destFileList = []
@@ -245,6 +245,6 @@ describe('FileCopier integration tests', () => {
           fc.addToQueue(source, destination, true, false)
         }, addTimeoutOffset * numFiles)
       }
-    }, 8000)
+    }, 12000)
   })
 })
