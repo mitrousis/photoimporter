@@ -11,21 +11,25 @@ const PlaySound = require('play-sound')()
  * mountpoint to watcher to be watched for changes
  */
 class SDWatcher extends Watcher {
-  constructor () {
+  /**
+   * @param {Boolean} playSoundOnUnmount defaults to false
+   */
+  constructor (playSoundOnUnmount = false) {
     super()
 
     this._validDriveLabels = []
     this._sdCardPollingInterval = 4000
     this._sdCardPollingTimeoutRef = null
-    this._knownSDCards = []
+    this._mountedRemovableDrives = []
+    this._playSoundOnUnmount = playSoundOnUnmount
   }
 
   /**
    *
-   * @param {Array<String>} driveLabels array of valid drive labels that will trigger a copy
+   * @param {Array<String>} validDriveLabels array of valid drive labels that will trigger a copy
    */
-  watch (driveLabels) {
-    this._validDriveLabels = driveLabels
+  watch (validDriveLabels) {
+    this._validDriveLabels = validDriveLabels
     this._nextDrivePoll()
   }
 
@@ -39,18 +43,12 @@ class SDWatcher extends Watcher {
   }
 
   async _nextDrivePoll () {
-    const newSDCards = await this._getNewSDCards()
+    const currDriveList = await drivelist.list()
+    this._mountedRemovableDrives = this._filterRemovableDrives(currDriveList)
 
-    if (newSDCards.length > 0) {
-      // Start watching
-      newSDCards.forEach((newCard) => {
-        Logger.info(`New removable drive found: "${newCard.label}"`, 'SDWatcher')
-        // Path will be watched by chokidir
-        super.watch(newCard.path)
-      })
-    }
-
-    this._knownSDCards = this._knownSDCards.concat(newSDCards)
+    this._mountedRemovableDrives.map((drive) => {
+      super.watch(drive.path)
+    })
 
     // Start polling over again
     this._sdCardPollingTimeoutRef = setTimeout(() => {
@@ -58,45 +56,15 @@ class SDWatcher extends Watcher {
     }, this._sdCardPollingInterval)
   }
 
-  async _getNewSDCards () {
-    const currDriveList = await drivelist.list()
-    const mountedDrivesStatus = this._getMountedSDCards(currDriveList)
-    return this._compareDrivesStatus(this._knownSDCards, mountedDrivesStatus)
-  }
-
-  /**
-   * This is used to create a diff between "known" drives and new ones mounted
-   * the new set of known drives are added to chokidir. This is needed to make sure we:
-   * 1) keep monitoring the same volume for changes, even if it is removed (and added again) and
-   * 2) don't have chokdir add a drive more than once
-
-   * @param {Array} currDrivesStatus
-   * @param {Array} newDrivesStatus
-   * @returns {Array} new drives found
-   */
-  _compareDrivesStatus (currDrivesStatus, newDrivesStatus) {
-    const foundNewDrives = newDrivesStatus.filter((newDrive) => {
-      // Checks if this drive path is already in list
-      const found = currDrivesStatus.findIndex((currDrive) => {
-        return currDrive.path === newDrive.path
-      })
-
-      return found
-    })
-
-    return foundNewDrives
-  }
-
   /**
    * Returns the SD card mount points, if available
    * @param {array} driveList
    */
-  _getMountedSDCards (driveList) {
-    const mountedSDCards = []
+  _filterRemovableDrives (driveList) {
+    const removableDrives = []
 
     for (const drive of driveList) {
       // Looking at drive labels for removable drives
-      // instead of targeting SD cards specifically
       if (drive.isRemovable) {
         const label = drive.mountpoints[0].label
 
@@ -109,39 +77,39 @@ class SDWatcher extends Watcher {
             label
           }
 
-          mountedSDCards.push(props)
+          removableDrives.push(props)
         }
       }
     }
 
-    return mountedSDCards
+    return removableDrives
   }
 
-  // Unmounts all the drives though in practice there's probably
-  // only one attached at any given time
+  // Unmounts all the drives though in practice there's probably only one attached at any given time
   async _unmountDrives () {
-    Logger.info('Unmounting any watched attached drives...', 'SDWatcher')
-
     let didUnmount = false
 
     if (os.platform() !== 'darwin') {
-      Logger.error('Automatic unmounting of removable drives is only supported on Mac', 'SDWatcher')
+      Logger.warn('Automatic unmounting of removable drives is only supported on Mac', 'SDWatcher')
     } else {
-      this._knownSDCards.forEach((drive) => {
+      this._mountedRemovableDrives.forEach((drive) => {
         // Mac only
         try {
           execSync(`hdiutil detach "${drive.path}"`)
-          Logger.verbose(`"${drive.path}" was unmounted`, 'SDWatcher')
+          Logger.info(`Unmounted ${drive.path}`, 'SDWatcher')
           didUnmount = true
         } catch (e) {
-          Logger.error(`Could not unmount "${drive.path}"`, 'SDWatcher', e)
+          Logger.error(`Could not unmount ${drive.path}`, 'SDWatcher', e)
         }
       })
+
+      // Clear out any mounts. Note this does not stop watching them for future changes
+      this._mountedRemovableDrives = []
     }
 
-    // Play a sound so you know the card is ready to be removed
+    // Play a audible, yet pleasant sound so you know the card is ready to be physically removed
     return new Promise((resolve) => {
-      if (didUnmount) {
+      if (this._playSoundOnUnmount && didUnmount) {
         PlaySound.play(path.join(__dirname, './notification_decorative-01.wav'), function (err) { // eslint-disable-line handle-callback-err
           if (err) console.log(err)
           resolve()

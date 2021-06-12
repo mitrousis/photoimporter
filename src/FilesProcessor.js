@@ -45,7 +45,7 @@ class FilesProcessor extends EventListener {
 
     // Create a watcher for SD cards outside of sources
     if (removableDiskLabels && removableDiskLabels.length) {
-      this._sdWatcher = new SDWatcher()
+      this._sdWatcher = new SDWatcher(true)
       this._sdWatcher.on(Watcher.EVENT_FILE_LIST_UPDATED, async (fileList) => {
         await this._processFileList(fileList, false)
       })
